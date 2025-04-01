@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export interface Profile {
   id: string;
@@ -87,9 +87,16 @@ export const getPosts = async () => {
 
 export const createPost = async (content: string) => {
   try {
+    // Get current user ID
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from('posts')
-      .insert({ content })
+      .insert({ 
+        content,
+        user_id: user.id 
+      })
       .select('*')
       .single();
     
@@ -194,9 +201,17 @@ export const getComments = async (postId: string) => {
 
 export const createComment = async (postId: string, content: string) => {
   try {
+    // Get current user ID
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from('comments')
-      .insert({ post_id: postId, content })
+      .insert({ 
+        post_id: postId,
+        content,
+        user_id: user.id
+      })
       .select('*')
       .single();
     
@@ -342,10 +357,15 @@ export const getPendingConnectionRequests = async (userId: string) => {
 
 export const sendConnectionRequest = async (addresseeId: string) => {
   try {
+    // Get current user ID
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
     const { data, error } = await supabase
       .from('connections')
       .insert({
         addressee_id: addresseeId,
+        requester_id: user.id,
         status: 'pending'
       })
       .select('*')

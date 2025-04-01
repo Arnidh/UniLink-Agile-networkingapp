@@ -7,19 +7,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Library, Users, Calendar, BookOpen, Bookmark, FileText } from "lucide-react";
 
 const ProfessorDashboard: React.FC = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, profile } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if not logged in or not a professor
   React.useEffect(() => {
     if (!currentUser) {
       navigate("/signin");
-    } else if (currentUser.role !== "professor") {
-      navigate(`/${currentUser.role}-dashboard`);
+    } else if (profile?.role !== "professor") {
+      navigate(`/${profile?.role}-dashboard`);
     }
-  }, [currentUser, navigate]);
+  }, [currentUser, profile, navigate]);
 
-  if (!currentUser || currentUser.role !== "professor") {
+  if (!currentUser || profile?.role !== "professor") {
     return null;
   }
 
@@ -31,7 +31,7 @@ const ProfessorDashboard: React.FC = () => {
         <div className="container px-4">
           <div className="mb-8">
             <h1 className="text-3xl font-bold">
-              Welcome, Dr. {currentUser.name.split(" ")[1]}!
+              Welcome, Dr. {profile.name.split(" ")[1]}!
             </h1>
             <p className="text-gray-600">
               Your professor dashboard for academic networking and research

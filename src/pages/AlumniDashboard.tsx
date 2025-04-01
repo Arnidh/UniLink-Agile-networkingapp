@@ -7,19 +7,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Briefcase, Users, Star, MessageCircle, Building, GraduationCap } from "lucide-react";
 
 const AlumniDashboard: React.FC = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, profile } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if not logged in or not an alumni
   React.useEffect(() => {
     if (!currentUser) {
       navigate("/signin");
-    } else if (currentUser.role !== "alumni") {
-      navigate(`/${currentUser.role}-dashboard`);
+    } else if (profile?.role !== "alumni") {
+      navigate(`/${profile?.role}-dashboard`);
     }
-  }, [currentUser, navigate]);
+  }, [currentUser, profile, navigate]);
 
-  if (!currentUser || currentUser.role !== "alumni") {
+  if (!currentUser || profile?.role !== "alumni") {
     return null;
   }
 
@@ -31,7 +31,7 @@ const AlumniDashboard: React.FC = () => {
         <div className="container px-4">
           <div className="mb-8">
             <h1 className="text-3xl font-bold">
-              Welcome back, {currentUser.name.split(" ")[0]}!
+              Welcome back, {profile.name.split(" ")[0]}!
             </h1>
             <p className="text-gray-600">
               Your alumni dashboard for university networking and mentorship
