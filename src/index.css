@@ -102,4 +102,17 @@
   .alumni-accent {
     @apply bg-unilink-alumni text-white;
   }
+  
+  /* New styles */
+  .hover-card-effect {
+    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+  }
+  
+  .form-input-focus {
+    @apply focus:border-unilink-primary focus:ring-2 focus:ring-unilink-accent;
+  }
+  
+  .auth-container {
+    @apply bg-gradient-to-br from-white to-slate-100 min-h-screen;
+  }
 }
