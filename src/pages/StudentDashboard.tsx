@@ -1,25 +1,109 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/layout/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { GraduationCap, Book, Users, Clock, Calendar, Search } from "lucide-react";
+import { GraduationCap, Users, Clock, Search, Plus, Bell } from "lucide-react";
+import CreatePost from "@/components/posts/CreatePost";
+import PostCard from "@/components/posts/PostCard";
+import ConnectionCard from "@/components/connections/ConnectionCard";
+import ProfileForm from "@/components/profiles/ProfileForm";
+import { Post, getPosts, getPendingConnectionRequests, Connection, searchProfiles, Profile, sendConnectionRequest } from "@/services/api";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const StudentDashboard: React.FC = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, profile } = useAuth();
   const navigate = useNavigate();
+  
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<Connection[]>([]);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("feed");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Profile[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Redirect if not logged in or not a student
-  React.useEffect(() => {
+  useEffect(() => {
     if (!currentUser) {
       navigate("/signin");
-    } else if (currentUser.role !== "student") {
-      navigate(`/${currentUser.role}-dashboard`);
+    } else if (profile && profile.role !== "student") {
+      navigate(`/${profile.role}-dashboard`);
     }
-  }, [currentUser, navigate]);
+  }, [currentUser, profile, navigate]);
+  
+  // Load posts
+  useEffect(() => {
+    if (currentUser) {
+      loadPosts();
+      loadPendingRequests();
+    }
+  }, [currentUser]);
+  
+  const loadPosts = async () => {
+    setIsLoading(true);
+    const fetchedPosts = await getPosts();
+    setPosts(fetchedPosts);
+    setIsLoading(false);
+  };
+  
+  const loadPendingRequests = async () => {
+    if (!currentUser) return;
+    
+    const requests = await getPendingConnectionRequests(currentUser.id);
+    setPendingRequests(requests);
+  };
+  
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    
+    setIsSearching(true);
+    const results = await searchProfiles(searchQuery);
+    
+    // Filter out the current user
+    const filteredResults = results.filter(user => user.id !== currentUser?.id);
+    
+    setSearchResults(filteredResults);
+    setIsSearching(false);
+    setIsSearchDialogOpen(true);
+  };
+  
+  const handleSendRequest = async (userId: string) => {
+    const connection = await sendConnectionRequest(userId);
+    if (connection) {
+      // Close dialog
+      setIsSearchDialogOpen(false);
+    }
+  };
+  
+  const handleConnectionResponse = async (connection: Connection) => {
+    setPendingRequests(pendingRequests.filter(req => req.id !== connection.id));
+  };
+  
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase();
+  };
 
-  if (!currentUser || currentUser.role !== "student") {
+  if (!currentUser || !profile) {
     return null;
   }
 
@@ -31,7 +115,7 @@ const StudentDashboard: React.FC = () => {
         <div className="container px-4">
           <div className="mb-8">
             <h1 className="text-3xl font-bold">
-              Welcome, {currentUser.name.split(" ")[0]}!
+              Welcome, {profile.name.split(" ")[0]}!
             </h1>
             <p className="text-gray-600">
               Your student dashboard for academic networking and opportunities
@@ -50,12 +134,20 @@ const StudentDashboard: React.FC = () => {
                 <div className="h-2 w-full bg-gray-100 rounded-full mb-2">
                   <div
                     className="h-2 bg-unilink-student rounded-full"
-                    style={{ width: "65%" }}
+                    style={{ width: profile.bio ? "75%" : "25%" }}
                   ></div>
                 </div>
                 <p className="text-sm text-gray-600">
-                  65% complete. Add your coursework and skills to improve your profile.
+                  {profile.bio ? "75% complete. Add your graduation year to improve your profile." : "25% complete. Complete your profile to improve visibility."}
                 </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3"
+                  onClick={() => setIsEditProfileOpen(true)}
+                >
+                  Edit Profile
+                </Button>
               </CardContent>
             </Card>
 
@@ -67,162 +159,263 @@ const StudentDashboard: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold">18</p>
-                <p className="text-sm text-gray-600">
-                  Connections with students, professors, and alumni
-                </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-2xl font-bold">0</p>
+                    <p className="text-sm text-gray-600">
+                      Connections
+                    </p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center gap-1"
+                    onClick={() => setIsSearchDialogOpen(true)}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Connect
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center">
-                  <Clock className="mr-2 text-unilink-student" />
-                  Upcoming Deadlines
+                  <Bell className="mr-2 text-unilink-student" />
+                  Pending Requests
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold">3</p>
-                <p className="text-sm text-gray-600">
-                  Upcoming project and internship application deadlines
-                </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-2xl font-bold">{pendingRequests.length}</p>
+                    <p className="text-sm text-gray-600">
+                      Connection requests
+                    </p>
+                  </div>
+                  {pendingRequests.length > 0 && (
+                    <Badge className="bg-unilink-student">{pendingRequests.length} new</Badge>
+                  )}
+                </div>
+                
+                {pendingRequests.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-sm font-medium mb-2">Recent requests:</p>
+                    <div className="space-y-2">
+                      {pendingRequests.slice(0, 2).map((request) => (
+                        <ConnectionCard 
+                          key={request.id} 
+                          connection={request} 
+                          isPending={true}
+                          onResponse={handleConnectionResponse}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Activity</CardTitle>
-                  <CardDescription>
-                    Stay updated with your network's activities
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-4 pb-4 border-b">
-                      <div className="h-10 w-10 rounded-full bg-unilink-professor flex items-center justify-center">
-                        <Book className="h-5 w-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Dr. Jane Smith posted a new research opportunity</p>
-                        <p className="text-sm text-gray-600">
-                          "Looking for students interested in AI and Machine Learning for a summer project."
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">2 hours ago</p>
-                      </div>
+              <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="mb-4">
+                  <TabsTrigger value="feed">Feed</TabsTrigger>
+                  <TabsTrigger value="network">Network</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="feed">
+                  <CreatePost onPostCreated={loadPosts} />
+                  
+                  {isLoading ? (
+                    <div className="text-center py-8 text-gray-500">Loading posts...</div>
+                  ) : posts.length === 0 ? (
+                    <div className="text-center py-8 border rounded-lg bg-gray-50">
+                      <Users className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                      <h3 className="text-lg font-semibold">No posts yet</h3>
+                      <p className="text-gray-500">Be the first to share something with your network</p>
                     </div>
-                    
-                    <div className="flex items-start gap-4 pb-4 border-b">
-                      <div className="h-10 w-10 rounded-full bg-unilink-alumni flex items-center justify-center">
-                        <Users className="h-5 w-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Alex Johnson is looking for interns</p>
-                        <p className="text-sm text-gray-600">
-                          "Tech Company Inc. is offering summer internships for Computer Science students."
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">1 day ago</p>
-                      </div>
+                  ) : (
+                    <div>
+                      {posts.map(post => (
+                        <PostCard 
+                          key={post.id} 
+                          post={post} 
+                          onPostDeleted={loadPosts}
+                          onPostUpdated={(updatedPost) => {
+                            setPosts(posts.map(p => p.id === updatedPost.id ? updatedPost : p));
+                          }}
+                        />
+                      ))}
                     </div>
-                    
-                    <div className="flex items-start gap-4">
-                      <div className="h-10 w-10 rounded-full bg-unilink-student flex items-center justify-center">
-                        <Calendar className="h-5 w-5 text-white" />
+                  )}
+                </TabsContent>
+                
+                <TabsContent value="network">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Your Network</CardTitle>
+                      <CardDescription>
+                        Manage your connections and requests
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="mb-6">
+                        <h3 className="text-md font-semibold mb-2">Pending Requests ({pendingRequests.length})</h3>
+                        {pendingRequests.length === 0 ? (
+                          <p className="text-gray-500 text-sm">No pending requests</p>
+                        ) : (
+                          <div className="space-y-3">
+                            {pendingRequests.map(request => (
+                              <ConnectionCard 
+                                key={request.id} 
+                                connection={request} 
+                                isPending={true}
+                                onResponse={handleConnectionResponse}
+                              />
+                            ))}
+                          </div>
+                        )}
                       </div>
+                      
                       <div>
-                        <p className="font-medium">Career Fair Approaching</p>
-                        <p className="text-sm text-gray-600">
-                          "Don't miss the Spring Career Fair on May 15th. Over 50 companies will be present."
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">3 days ago</p>
+                        <h3 className="text-md font-semibold mb-2">Find Connections</h3>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            placeholder="Search by name, university, or department"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="flex-1"
+                          />
+                          <Button 
+                            onClick={handleSearch}
+                            disabled={!searchQuery.trim() || isSearching}
+                          >
+                            <Search className="h-4 w-4 mr-2" />
+                            Search
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
             </div>
 
             <div>
               <Card>
                 <CardHeader>
-                  <CardTitle>Recommended Connections</CardTitle>
+                  <CardTitle>Your Profile</CardTitle>
                   <CardDescription>
-                    People you might want to connect with
+                    Your professional information
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                          <img 
-                            src="https://i.pravatar.cc/150?u=prof1" 
-                            alt="Professor" 
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                        <div>
-                          <p className="font-medium">Dr. Robert Chen</p>
-                          <p className="text-xs text-gray-600">
-                            Computer Science Professor
-                          </p>
-                        </div>
-                      </div>
-                      <button className="text-xs font-medium text-unilink-primary hover:underline">
-                        Connect
-                      </button>
-                    </div>
+                  <div className="flex flex-col items-center text-center mb-4">
+                    <Avatar className="h-20 w-20 mb-3">
+                      <AvatarImage src={profile.profile_picture} alt={profile.name} />
+                      <AvatarFallback className="text-lg">{getInitials(profile.name)}</AvatarFallback>
+                    </Avatar>
+                    <h3 className="text-xl font-semibold">{profile.name}</h3>
+                    <p className="text-gray-600">{profile.role}</p>
                     
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                          <img 
-                            src="https://i.pravatar.cc/150?u=alum1" 
-                            alt="Alumni" 
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                        <div>
-                          <p className="font-medium">Sarah Williams</p>
-                          <p className="text-xs text-gray-600">
-                            Alumni, Software Engineer at Tech Co.
-                          </p>
-                        </div>
-                      </div>
-                      <button className="text-xs font-medium text-unilink-primary hover:underline">
-                        Connect
-                      </button>
-                    </div>
+                    {profile.university && (
+                      <p className="text-sm text-gray-600 mt-1">{profile.university}</p>
+                    )}
                     
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                          <img 
-                            src="https://i.pravatar.cc/150?u=stud1" 
-                            alt="Student" 
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                        <div>
-                          <p className="font-medium">Michael Torres</p>
-                          <p className="text-xs text-gray-600">
-                            Student, Same Department
-                          </p>
-                        </div>
-                      </div>
-                      <button className="text-xs font-medium text-unilink-primary hover:underline">
-                        Connect
-                      </button>
-                    </div>
+                    {profile.department && (
+                      <Badge variant="outline" className="mt-2">{profile.department}</Badge>
+                    )}
                   </div>
+                  
+                  {profile.bio ? (
+                    <div className="mt-4">
+                      <h4 className="text-sm font-semibold mb-1">About</h4>
+                      <p className="text-sm text-gray-600">{profile.bio}</p>
+                    </div>
+                  ) : (
+                    <div className="mt-4 p-3 border rounded-md text-center">
+                      <p className="text-sm text-gray-500">Add a bio to tell others about yourself</p>
+                    </div>
+                  )}
+                  
+                  <Button
+                    className="w-full mt-4"
+                    onClick={() => setIsEditProfileOpen(true)}
+                  >
+                    Edit Profile
+                  </Button>
                 </CardContent>
               </Card>
             </div>
           </div>
         </div>
       </main>
+      
+      {/* Edit Profile Dialog */}
+      <Dialog open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Edit Profile</DialogTitle>
+            <DialogDescription>
+              Update your profile information to help others connect with you
+            </DialogDescription>
+          </DialogHeader>
+          <ProfileForm />
+        </DialogContent>
+      </Dialog>
+      
+      {/* Search Results Dialog */}
+      <Dialog open={isSearchDialogOpen} onOpenChange={setIsSearchDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Search Results</DialogTitle>
+            <DialogDescription>
+              Connect with other users in the UniLink network
+            </DialogDescription>
+          </DialogHeader>
+          
+          {isSearching ? (
+            <div className="py-8 text-center">Searching...</div>
+          ) : searchResults.length === 0 ? (
+            <div className="py-8 text-center text-gray-500">
+              No users found matching "{searchQuery}"
+            </div>
+          ) : (
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto py-2">
+              {searchResults.map(user => (
+                <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Avatar>
+                      <AvatarImage src={user.profile_picture} alt={user.name} />
+                      <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="font-semibold">{user.name}</h3>
+                      <p className="text-sm text-gray-600">
+                        {user.role} {user.department ? `• ${user.department}` : ""}
+                      </p>
+                    </div>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => handleSendRequest(user.id)}
+                  >
+                    Connect
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsSearchDialogOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

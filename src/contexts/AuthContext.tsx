@@ -1,102 +1,124 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Session, User } from "@supabase/supabase-js";
+import { toast } from "@/hooks/use-toast";
 
 export type UserRole = "student" | "professor" | "alumni";
 
-export interface User {
+export interface Profile {
   id: string;
   name: string;
-  email: string;
   role: UserRole;
-  profilePicture?: string;
+  bio?: string;
+  university?: string;
+  department?: string;
+  profile_picture?: string;
+  graduation_year?: number;
+  created_at: string;
+  updated_at: string;
 }
 
 interface AuthContextType {
   currentUser: User | null;
-  signIn: (email: string, password: string, role: UserRole) => Promise<void>;
-  signUp: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
-  signOut: () => void;
+  profile: Profile | null;
+  session: Session | null;
   isLoading: boolean;
   error: string | null;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
+  signOut: () => Promise<void>;
+  updateProfile: (updates: Partial<Profile>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock databases for each user role
-const studentDb: User[] = [
-  {
-    id: "s1",
-    name: "John Doe",
-    email: "john@university.edu",
-    role: "student",
-    profilePicture: "https://i.pravatar.cc/150?u=john"
-  }
-];
-
-const professorDb: User[] = [
-  {
-    id: "p1",
-    name: "Dr. Jane Smith",
-    email: "jane@university.edu",
-    role: "professor",
-    profilePicture: "https://i.pravatar.cc/150?u=jane"
-  }
-];
-
-const alumniDb: User[] = [
-  {
-    id: "a1",
-    name: "Alex Johnson",
-    email: "alex@company.com",
-    role: "alumni",
-    profilePicture: "https://i.pravatar.cc/150?u=alex"
-  }
-];
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check if user is stored in local storage
-    const storedUser = localStorage.getItem("unilink_user");
-    if (storedUser) {
-      setCurrentUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session);
+        setCurrentUser(session?.user ?? null);
+        
+        if (session?.user) {
+          await fetchProfile(session.user.id);
+        } else {
+          setProfile(null);
+        }
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setCurrentUser(session?.user ?? null);
+      
+      if (session?.user) {
+        fetchProfile(session.user.id).finally(() => {
+          setIsLoading(false);
+        });
+      } else {
+        setIsLoading(false);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const signIn = async (email: string, password: string, role: UserRole) => {
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return;
+      }
+      
+      setProfile(data as Profile);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+
+  const signIn = async (email: string, password: string) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
       
-      let userFound = null;
+      if (error) throw error;
       
-      switch (role) {
-        case "student":
-          userFound = studentDb.find(user => user.email === email);
-          break;
-        case "professor":
-          userFound = professorDb.find(user => user.email === email);
-          break;
-        case "alumni":
-          userFound = alumniDb.find(user => user.email === email);
-          break;
+      if (data?.user) {
+        await fetchProfile(data.user.id);
+        toast({
+          title: "Welcome back!",
+          description: "You've successfully signed in."
+        });
       }
-      
-      if (userFound) {
-        setCurrentUser(userFound);
-        localStorage.setItem("unilink_user", JSON.stringify(userFound));
-      } else {
-        throw new Error("Invalid credentials");
-      }
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+    } catch (error: any) {
+      setError(error.message || "Failed to sign in");
+      toast({
+        title: "Sign in failed",
+        description: error.message || "An error occurred while signing in",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -107,59 +129,92 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Check if email already exists
-      const emailExists = 
-        studentDb.some(u => u.email === email) || 
-        professorDb.some(u => u.email === email) || 
-        alumniDb.some(u => u.email === email);
-      
-      if (emailExists) {
-        throw new Error("Email already in use");
-      }
-      
-      // Create new user
-      const newUser: User = {
-        id: `${role[0]}${Date.now()}`,
-        name,
+      const { data, error } = await supabase.auth.signUp({
         email,
-        role,
-        profilePicture: `https://i.pravatar.cc/150?u=${email}`
-      };
+        password,
+        options: {
+          data: {
+            name,
+            role
+          }
+        }
+      });
       
-      // Add to appropriate database (in real app, this would be a server call)
-      switch (role) {
-        case "student":
-          studentDb.push(newUser);
-          break;
-        case "professor":
-          professorDb.push(newUser);
-          break;
-        case "alumni":
-          alumniDb.push(newUser);
-          break;
-      }
+      if (error) throw error;
       
-      // Auto sign in
-      setCurrentUser(newUser);
-      localStorage.setItem("unilink_user", JSON.stringify(newUser));
-      
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+      toast({
+        title: "Account created!",
+        description: "Your account has been successfully created."
+      });
+    } catch (error: any) {
+      setError(error.message || "Failed to sign up");
+      toast({
+        title: "Sign up failed",
+        description: error.message || "An error occurred while signing up",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const signOut = () => {
-    setCurrentUser(null);
-    localStorage.removeItem("unilink_user");
+  const signOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      setProfile(null);
+      toast({
+        title: "Signed out",
+        description: "You've been successfully signed out."
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error signing out",
+        description: error.message || "An error occurred while signing out",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const updateProfile = async (updates: Partial<Profile>) => {
+    if (!currentUser) return;
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', currentUser.id);
+      
+      if (error) throw error;
+      
+      if (profile) {
+        setProfile({ ...profile, ...updates });
+      }
+      
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been successfully updated."
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error updating profile",
+        description: error.message || "An error occurred while updating your profile",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ currentUser, signIn, signUp, signOut, isLoading, error }}>
+    <AuthContext.Provider value={{ 
+      currentUser, 
+      profile, 
+      session,
+      isLoading, 
+      error, 
+      signIn, 
+      signUp, 
+      signOut,
+      updateProfile
+    }}>
       {children}
     </AuthContext.Provider>
   );
