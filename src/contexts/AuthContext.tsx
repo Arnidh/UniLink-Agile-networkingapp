@@ -3,21 +3,9 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 import { toast } from "@/hooks/use-toast";
+import { Profile } from "@/services/api";
 
 export type UserRole = "student" | "professor" | "alumni";
-
-export interface Profile {
-  id: string;
-  name: string;
-  role: UserRole;
-  bio?: string;
-  university?: string;
-  department?: string;
-  profile_picture?: string;
-  graduation_year?: number;
-  created_at: string;
-  updated_at: string;
-}
 
 interface AuthContextType {
   currentUser: User | null;
@@ -181,7 +169,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { error } = await supabase
         .from('profiles')
-        .update(updates)
+        .update(updates as any)
         .eq('id', currentUser.id);
       
       if (error) throw error;

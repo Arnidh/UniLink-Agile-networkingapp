@@ -1,7 +1,19 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Profile } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+
+export interface Profile {
+  id: string;
+  name: string;
+  role: "student" | "professor" | "alumni";
+  bio?: string;
+  university?: string;
+  department?: string;
+  profile_picture?: string;
+  graduation_year?: number;
+  created_at: string;
+  updated_at: string;
+}
 
 export interface Post {
   id: string;
@@ -48,7 +60,7 @@ export const getPosts = async () => {
     
     // Get comment counts for each post
     const postsWithCommentCounts = await Promise.all(
-      data.map(async (post) => {
+      data.map(async (post: any) => {
         const { count, error: countError } = await supabase
           .from('comments')
           .select('id', { count: 'exact', head: true })
@@ -296,7 +308,7 @@ export const getConnections = async (userId: string, status: 'pending' | 'accept
     
     if (receivedError) throw receivedError;
     
-    return [...sentConnections, ...receivedConnections] as Connection[];
+    return [...(sentConnections as any), ...(receivedConnections as any)] as Connection[];
   } catch (error: any) {
     console.error('Error fetching connections:', error);
     toast({

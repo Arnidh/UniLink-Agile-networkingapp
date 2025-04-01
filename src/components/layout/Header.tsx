@@ -14,7 +14,7 @@ import {
 import { LogOut, User, Settings } from "lucide-react";
 
 const Header: React.FC = () => {
-  const { currentUser, signOut } = useAuth();
+  const { currentUser, profile, signOut } = useAuth();
 
   const getInitials = (name: string) => {
     return name
@@ -43,19 +43,19 @@ const Header: React.FC = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="rounded-full p-0 h-10 w-10">
                     <Avatar>
-                      <AvatarImage src={currentUser.profilePicture} alt={currentUser.name} />
-                      <AvatarFallback>{getInitials(currentUser.name)}</AvatarFallback>
+                      <AvatarImage src={profile?.profile_picture} alt={profile?.name || "User"} />
+                      <AvatarFallback>{profile ? getInitials(profile.name) : "U"}</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <div className="flex items-center gap-2 p-2">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={currentUser.profilePicture} alt={currentUser.name} />
-                      <AvatarFallback>{getInitials(currentUser.name)}</AvatarFallback>
+                      <AvatarImage src={profile?.profile_picture} alt={profile?.name || "User"} />
+                      <AvatarFallback>{profile ? getInitials(profile.name) : "U"}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col">
-                      <span className="font-medium">{currentUser.name}</span>
+                      <span className="font-medium">{profile?.name || "User"}</span>
                       <span className="text-xs text-muted-foreground">{currentUser.email}</span>
                     </div>
                   </div>

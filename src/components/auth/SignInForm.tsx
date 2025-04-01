@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { UserRole, useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,6 @@ import { toast } from "sonner";
 const SignInForm: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<UserRole>("student");
   const { signIn, isLoading, error } = useAuth();
   const navigate = useNavigate();
 
@@ -19,11 +18,10 @@ const SignInForm: React.FC = () => {
     e.preventDefault();
     
     try {
-      await signIn(email, password, role);
+      await signIn(email, password);
       toast.success("Signed in successfully");
       
-      // Navigate to the appropriate dashboard based on role
-      navigate(`/${role}-dashboard`);
+      // We'll navigate after the auth state change updates the profile
     } catch (error) {
       // Error is handled in the AuthContext
     }
@@ -31,8 +29,6 @@ const SignInForm: React.FC = () => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <RoleSelector selectedRole={role} onChange={setRole} />
-      
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input
