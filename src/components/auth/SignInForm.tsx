@@ -11,16 +11,15 @@ const SignInForm: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { signIn, isLoading, error } = useAuth();
+  const { signIn, isLoading, error, profile } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await signIn(email, password);
-      
-      // If we reach here, authentication was successful
-      // The AuthContext will handle redirection based on the user's role
+      // Authentication is handled in the AuthContext
+      // We don't need to handle redirection here anymore
     } catch (error) {
       // Error is handled in the AuthContext
     }

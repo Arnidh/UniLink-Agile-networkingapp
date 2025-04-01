@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { Profile } from "@/services/api";
+import { useNavigate } from "react-router-dom";
 
 export type UserRole = "student" | "professor" | "alumni";
 
@@ -27,6 +28,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Set up auth state listener
@@ -36,7 +38,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setCurrentUser(session?.user ?? null);
         
         if (session?.user) {
-          await fetchProfile(session.user.id);
+          // Use setTimeout to prevent potential recursive issues with Supabase auth
+          setTimeout(async () => {
+            await fetchProfile(session.user.id);
+          }, 0);
         } else {
           setProfile(null);
         }
@@ -60,7 +65,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate]);
+
+  // Add useEffect to handle redirects based on profile role
+  useEffect(() => {
+    if (profile && !isLoading) {
+      const currentPath = window.location.pathname;
+      
+      // Only redirect if on signin page or root
+      if (currentPath === '/signin' || currentPath === '/') {
+        switch (profile.role) {
+          case 'student':
+            navigate('/student-dashboard');
+            break;
+          case 'professor':
+            navigate('/professor-dashboard');
+            break;
+          case 'alumni':
+            navigate('/alumni-dashboard');
+            break;
+          default:
+            // Default to student dashboard if role is unknown
+            navigate('/student-dashboard');
+        }
+      }
+    }
+  }, [profile, isLoading, navigate]);
 
   const fetchProfile = async (userId: string) => {
     try {
