@@ -76,8 +76,7 @@ export const getPosts = async () => {
     return postsWithCommentCounts as Post[];
   } catch (error: any) {
     console.error('Error fetching posts:', error);
-    toast({
-      title: 'Error fetching posts',
+    toast('Error fetching posts', {
       description: error.message || 'An error occurred while fetching posts',
       variant: 'destructive'
     });
@@ -102,16 +101,14 @@ export const createPost = async (content: string) => {
     
     if (error) throw error;
     
-    toast({
-      title: 'Post created',
+    toast('Post created', {
       description: 'Your post has been successfully created.'
     });
     
     return data as Post;
   } catch (error: any) {
     console.error('Error creating post:', error);
-    toast({
-      title: 'Error creating post',
+    toast('Error creating post', {
       description: error.message || 'An error occurred while creating your post',
       variant: 'destructive'
     });
@@ -130,16 +127,14 @@ export const updatePost = async (id: string, content: string) => {
     
     if (error) throw error;
     
-    toast({
-      title: 'Post updated',
+    toast('Post updated', {
       description: 'Your post has been successfully updated.'
     });
     
     return data as Post;
   } catch (error: any) {
     console.error('Error updating post:', error);
-    toast({
-      title: 'Error updating post',
+    toast('Error updating post', {
       description: error.message || 'An error occurred while updating your post',
       variant: 'destructive'
     });
@@ -156,16 +151,14 @@ export const deletePost = async (id: string) => {
     
     if (error) throw error;
     
-    toast({
-      title: 'Post deleted',
+    toast('Post deleted', {
       description: 'Your post has been successfully deleted.'
     });
     
     return true;
   } catch (error: any) {
     console.error('Error deleting post:', error);
-    toast({
-      title: 'Error deleting post',
+    toast('Error deleting post', {
       description: error.message || 'An error occurred while deleting your post',
       variant: 'destructive'
     });
@@ -190,8 +183,7 @@ export const getComments = async (postId: string) => {
     return data as Comment[];
   } catch (error: any) {
     console.error('Error fetching comments:', error);
-    toast({
-      title: 'Error fetching comments',
+    toast('Error fetching comments', {
       description: error.message || 'An error occurred while fetching comments',
       variant: 'destructive'
     });
@@ -217,16 +209,14 @@ export const createComment = async (postId: string, content: string) => {
     
     if (error) throw error;
     
-    toast({
-      title: 'Comment added',
+    toast('Comment added', {
       description: 'Your comment has been successfully added.'
     });
     
     return data as Comment;
   } catch (error: any) {
     console.error('Error creating comment:', error);
-    toast({
-      title: 'Error adding comment',
+    toast('Error adding comment', {
       description: error.message || 'An error occurred while adding your comment',
       variant: 'destructive'
     });
@@ -245,16 +235,14 @@ export const updateComment = async (id: string, content: string) => {
     
     if (error) throw error;
     
-    toast({
-      title: 'Comment updated',
+    toast('Comment updated', {
       description: 'Your comment has been successfully updated.'
     });
     
     return data as Comment;
   } catch (error: any) {
     console.error('Error updating comment:', error);
-    toast({
-      title: 'Error updating comment',
+    toast('Error updating comment', {
       description: error.message || 'An error occurred while updating your comment',
       variant: 'destructive'
     });
@@ -271,16 +259,14 @@ export const deleteComment = async (id: string) => {
     
     if (error) throw error;
     
-    toast({
-      title: 'Comment deleted',
+    toast('Comment deleted', {
       description: 'Your comment has been successfully deleted.'
     });
     
     return true;
   } catch (error: any) {
     console.error('Error deleting comment:', error);
-    toast({
-      title: 'Error deleting comment',
+    toast('Error deleting comment', {
       description: error.message || 'An error occurred while deleting your comment',
       variant: 'destructive'
     });
@@ -326,8 +312,7 @@ export const getConnections = async (userId: string, status: 'pending' | 'accept
     return [...(sentConnections as any), ...(receivedConnections as any)] as Connection[];
   } catch (error: any) {
     console.error('Error fetching connections:', error);
-    toast({
-      title: 'Error fetching connections',
+    toast('Error fetching connections', {
       description: error.message || 'An error occurred while fetching connections',
       variant: 'destructive'
     });
@@ -373,16 +358,14 @@ export const sendConnectionRequest = async (addresseeId: string) => {
     
     if (error) throw error;
     
-    toast({
-      title: 'Connection request sent',
+    toast('Connection request sent', {
       description: 'Your connection request has been sent.'
     });
     
     return data as Connection;
   } catch (error: any) {
     console.error('Error sending connection request:', error);
-    toast({
-      title: 'Error sending connection request',
+    toast('Error sending connection request', {
       description: error.message || 'An error occurred while sending the connection request',
       variant: 'destructive'
     });
@@ -401,16 +384,14 @@ export const respondToConnectionRequest = async (connectionId: string, status: '
     
     if (error) throw error;
     
-    toast({
-      title: `Connection ${status === 'accepted' ? 'accepted' : 'rejected'}`,
+    toast(`Connection ${status === 'accepted' ? 'accepted' : 'rejected'}`, {
       description: `You have ${status === 'accepted' ? 'accepted' : 'rejected'} the connection request.`
     });
     
     return data as Connection;
   } catch (error: any) {
     console.error('Error responding to connection request:', error);
-    toast({
-      title: 'Error responding to connection request',
+    toast('Error responding to connection request', {
       description: error.message || 'An error occurred while responding to the connection request',
       variant: 'destructive'
     });
