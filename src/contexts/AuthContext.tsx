@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Profile } from "@/services/api";
 
 export type UserRole = "student" | "professor" | "alumni";
@@ -95,17 +95,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (data?.user) {
         await fetchProfile(data.user.id);
-        toast({
-          title: "Welcome back!",
+        toast.success('Welcome back!', {
           description: "You've successfully signed in."
         });
       }
     } catch (error: any) {
       setError(error.message || "Failed to sign in");
-      toast({
-        title: "Sign in failed",
-        description: error.message || "An error occurred while signing in",
-        variant: "destructive"
+      toast.error('Sign in failed', {
+        description: error.message || "An error occurred while signing in"
       });
     } finally {
       setIsLoading(false);
@@ -130,16 +127,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) throw error;
       
-      toast({
-        title: "Account created!",
+      toast.success('Account created!', {
         description: "Your account has been successfully created."
       });
     } catch (error: any) {
       setError(error.message || "Failed to sign up");
-      toast({
-        title: "Sign up failed",
-        description: error.message || "An error occurred while signing up",
-        variant: "destructive"
+      toast.error('Sign up failed', {
+        description: error.message || "An error occurred while signing up"
       });
     } finally {
       setIsLoading(false);
@@ -150,15 +144,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await supabase.auth.signOut();
       setProfile(null);
-      toast({
-        title: "Signed out",
+      toast.success('Signed out', {
         description: "You've been successfully signed out."
       });
     } catch (error: any) {
-      toast({
-        title: "Error signing out",
-        description: error.message || "An error occurred while signing out",
-        variant: "destructive"
+      toast.error('Error signing out', {
+        description: error.message || "An error occurred while signing out"
       });
     }
   };
@@ -178,15 +169,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setProfile({ ...profile, ...updates });
       }
       
-      toast({
-        title: "Profile updated",
+      toast.success('Profile updated', {
         description: "Your profile has been successfully updated."
       });
     } catch (error: any) {
-      toast({
-        title: "Error updating profile",
-        description: error.message || "An error occurred while updating your profile",
-        variant: "destructive"
+      toast.error('Error updating profile', {
+        description: error.message || "An error occurred while updating your profile"
       });
     }
   };

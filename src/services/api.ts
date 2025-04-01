@@ -76,9 +76,8 @@ export const getPosts = async () => {
     return postsWithCommentCounts as Post[];
   } catch (error: any) {
     console.error('Error fetching posts:', error);
-    toast('Error fetching posts', {
-      description: error.message || 'An error occurred while fetching posts',
-      variant: 'destructive'
+    toast.error('Error fetching posts', {
+      description: error.message || 'An error occurred while fetching posts'
     });
     return [];
   }
@@ -101,16 +100,15 @@ export const createPost = async (content: string) => {
     
     if (error) throw error;
     
-    toast('Post created', {
+    toast.success('Post created', {
       description: 'Your post has been successfully created.'
     });
     
     return data as Post;
   } catch (error: any) {
     console.error('Error creating post:', error);
-    toast('Error creating post', {
-      description: error.message || 'An error occurred while creating your post',
-      variant: 'destructive'
+    toast.error('Error creating post', {
+      description: error.message || 'An error occurred while creating your post'
     });
     return null;
   }
@@ -127,16 +125,15 @@ export const updatePost = async (id: string, content: string) => {
     
     if (error) throw error;
     
-    toast('Post updated', {
+    toast.success('Post updated', {
       description: 'Your post has been successfully updated.'
     });
     
     return data as Post;
   } catch (error: any) {
     console.error('Error updating post:', error);
-    toast('Error updating post', {
-      description: error.message || 'An error occurred while updating your post',
-      variant: 'destructive'
+    toast.error('Error updating post', {
+      description: error.message || 'An error occurred while updating your post'
     });
     return null;
   }
@@ -151,16 +148,15 @@ export const deletePost = async (id: string) => {
     
     if (error) throw error;
     
-    toast('Post deleted', {
+    toast.success('Post deleted', {
       description: 'Your post has been successfully deleted.'
     });
     
     return true;
   } catch (error: any) {
     console.error('Error deleting post:', error);
-    toast('Error deleting post', {
-      description: error.message || 'An error occurred while deleting your post',
-      variant: 'destructive'
+    toast.error('Error deleting post', {
+      description: error.message || 'An error occurred while deleting your post'
     });
     return false;
   }
@@ -183,9 +179,8 @@ export const getComments = async (postId: string) => {
     return data as Comment[];
   } catch (error: any) {
     console.error('Error fetching comments:', error);
-    toast('Error fetching comments', {
-      description: error.message || 'An error occurred while fetching comments',
-      variant: 'destructive'
+    toast.error('Error fetching comments', {
+      description: error.message || 'An error occurred while fetching comments'
     });
     return [];
   }
@@ -209,16 +204,15 @@ export const createComment = async (postId: string, content: string) => {
     
     if (error) throw error;
     
-    toast('Comment added', {
+    toast.success('Comment added', {
       description: 'Your comment has been successfully added.'
     });
     
     return data as Comment;
   } catch (error: any) {
     console.error('Error creating comment:', error);
-    toast('Error adding comment', {
-      description: error.message || 'An error occurred while adding your comment',
-      variant: 'destructive'
+    toast.error('Error adding comment', {
+      description: error.message || 'An error occurred while adding your comment'
     });
     return null;
   }
@@ -235,16 +229,15 @@ export const updateComment = async (id: string, content: string) => {
     
     if (error) throw error;
     
-    toast('Comment updated', {
+    toast.success('Comment updated', {
       description: 'Your comment has been successfully updated.'
     });
     
     return data as Comment;
   } catch (error: any) {
     console.error('Error updating comment:', error);
-    toast('Error updating comment', {
-      description: error.message || 'An error occurred while updating your comment',
-      variant: 'destructive'
+    toast.error('Error updating comment', {
+      description: error.message || 'An error occurred while updating your comment'
     });
     return null;
   }
@@ -259,16 +252,15 @@ export const deleteComment = async (id: string) => {
     
     if (error) throw error;
     
-    toast('Comment deleted', {
+    toast.success('Comment deleted', {
       description: 'Your comment has been successfully deleted.'
     });
     
     return true;
   } catch (error: any) {
     console.error('Error deleting comment:', error);
-    toast('Error deleting comment', {
-      description: error.message || 'An error occurred while deleting your comment',
-      variant: 'destructive'
+    toast.error('Error deleting comment', {
+      description: error.message || 'An error occurred while deleting your comment'
     });
     return false;
   }
@@ -312,9 +304,8 @@ export const getConnections = async (userId: string, status: 'pending' | 'accept
     return [...(sentConnections as any), ...(receivedConnections as any)] as Connection[];
   } catch (error: any) {
     console.error('Error fetching connections:', error);
-    toast('Error fetching connections', {
-      description: error.message || 'An error occurred while fetching connections',
-      variant: 'destructive'
+    toast.error('Error fetching connections', {
+      description: error.message || 'An error occurred while fetching connections'
     });
     return [];
   }
@@ -358,16 +349,15 @@ export const sendConnectionRequest = async (addresseeId: string) => {
     
     if (error) throw error;
     
-    toast('Connection request sent', {
+    toast.success('Connection request sent', {
       description: 'Your connection request has been sent.'
     });
     
     return data as Connection;
   } catch (error: any) {
     console.error('Error sending connection request:', error);
-    toast('Error sending connection request', {
-      description: error.message || 'An error occurred while sending the connection request',
-      variant: 'destructive'
+    toast.error('Error sending connection request', {
+      description: error.message || 'An error occurred while sending the connection request'
     });
     return null;
   }
@@ -384,16 +374,15 @@ export const respondToConnectionRequest = async (connectionId: string, status: '
     
     if (error) throw error;
     
-    toast(`Connection ${status === 'accepted' ? 'accepted' : 'rejected'}`, {
+    toast.success(`Connection ${status === 'accepted' ? 'accepted' : 'rejected'}`, {
       description: `You have ${status === 'accepted' ? 'accepted' : 'rejected'} the connection request.`
     });
     
     return data as Connection;
   } catch (error: any) {
     console.error('Error responding to connection request:', error);
-    toast('Error responding to connection request', {
-      description: error.message || 'An error occurred while responding to the connection request',
-      variant: 'destructive'
+    toast.error('Error responding to connection request', {
+      description: error.message || 'An error occurred while responding to the connection request'
     });
     return null;
   }

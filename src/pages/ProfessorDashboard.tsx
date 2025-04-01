@@ -1,247 +1,109 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { Badge } from "@/components/ui/badge";
 import Header from "@/components/layout/Header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Library, Users, Calendar, BookOpen, Bookmark, FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import CreatePost from "@/components/posts/CreatePost";
+import PostCard from "@/components/posts/PostCard";
+import { getPosts } from "@/services/api";
+import { useQuery } from "@tanstack/react-query";
 
 const ProfessorDashboard: React.FC = () => {
-  const { currentUser, profile } = useAuth();
+  const { currentUser, profile, isLoading } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect if not logged in or not a professor
-  React.useEffect(() => {
-    if (!currentUser) {
+  useEffect(() => {
+    if (!isLoading && !currentUser) {
       navigate("/signin");
-    } else if (profile?.role !== "professor") {
-      navigate(`/${profile?.role}-dashboard`);
     }
-  }, [currentUser, profile, navigate]);
+  }, [currentUser, isLoading, navigate]);
 
-  if (!currentUser || profile?.role !== "professor") {
+  const { data: posts, isLoading: postsLoading } = useQuery({
+    queryKey: ['posts'],
+    queryFn: getPosts,
+    enabled: !!currentUser,
+  });
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  }
+
+  if (!profile) {
     return null;
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen bg-gray-50">
       <Header />
       
-      <main className="flex-1 py-8">
-        <div className="container px-4">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold">
-              Welcome, Dr. {profile.name.split(" ")[1]}!
-            </h1>
-            <p className="text-gray-600">
-              Your professor dashboard for academic networking and research
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center">
-                  <Library className="mr-2 text-unilink-professor" />
-                  Research Projects
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">5</p>
-                <p className="text-sm text-gray-600">
-                  Active research projects with student involvement
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center">
-                  <Users className="mr-2 text-unilink-professor" />
-                  Mentees
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">12</p>
-                <p className="text-sm text-gray-600">
-                  Students under your academic guidance
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center">
-                  <Calendar className="mr-2 text-unilink-professor" />
-                  Upcoming Events
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">3</p>
-                <p className="text-sm text-gray-600">
-                  Academic conferences and department events
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Research Opportunities</CardTitle>
-                  <CardDescription>
-                    Manage your research projects and find student collaborators
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="p-4 rounded-lg border hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-medium">AI Research Assistant Needed</h3>
-                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                          Open
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-2">
-                        Looking for a student with strong Python skills and background in machine learning.
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center text-xs text-gray-500">
-                          <BookOpen className="h-3 w-3 mr-1" />
-                          <span>4 applicants</span>
-                        </div>
-                        <div className="flex items-center text-xs text-gray-500">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          <span>Deadline: May 30, 2025</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="p-4 rounded-lg border hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-medium">Database Systems Research Project</h3>
-                        <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
-                          Closing Soon
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-2">
-                        Research opportunity in distributed database systems for undergraduate students.
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center text-xs text-gray-500">
-                          <BookOpen className="h-3 w-3 mr-1" />
-                          <span>7 applicants</span>
-                        </div>
-                        <div className="flex items-center text-xs text-gray-500">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          <span>Deadline: April 15, 2025</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="p-4 rounded-lg border hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-medium">Research Paper Co-Author</h3>
-                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                          New
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-2">
-                        Seeking a graduate student to collaborate on a research paper for an upcoming conference.
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center text-xs text-gray-500">
-                          <BookOpen className="h-3 w-3 mr-1" />
-                          <span>2 applicants</span>
-                        </div>
-                        <div className="flex items-center text-xs text-gray-500">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          <span>Deadline: June 10, 2025</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+      <main className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left sidebar - User profile */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="flex flex-col items-center text-center">
+                <div className="h-24 w-24 rounded-full bg-gradient-to-r from-blue-500 to-teal-500 flex items-center justify-center text-white text-3xl font-bold">
+                  {profile.name.charAt(0)}
+                </div>
+                <h2 className="mt-4 text-xl font-bold">{profile.name}</h2>
+                <Badge className="mt-2 bg-unilink-professor">Professor</Badge>
+                
+                {profile.university && (
+                  <p className="mt-3 text-gray-600">{profile.university}</p>
+                )}
+                
+                {profile.department && (
+                  <p className="text-sm text-gray-500">{profile.department}</p>
+                )}
+                
+                {profile.bio && (
+                  <p className="mt-4 text-gray-700">{profile.bio}</p>
+                )}
+                
+                <div className="mt-6 w-full">
+                  <Button variant="outline" className="w-full" onClick={() => navigate("/profile")}>
+                    Edit Profile
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="mt-6">
+                <h3 className="font-medium text-gray-900">Connections</h3>
+                <div className="flex justify-between mt-2">
+                  <span className="text-gray-600">Students</span>
+                  <span className="font-medium">87</span>
+                </div>
+                <div className="flex justify-between mt-1">
+                  <span className="text-gray-600">Professors</span>
+                  <span className="font-medium">24</span>
+                </div>
+                <div className="flex justify-between mt-1">
+                  <span className="text-gray-600">Alumni</span>
+                  <span className="font-medium">36</span>
+                </div>
+              </div>
             </div>
-
-            <div>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Student Engagement</CardTitle>
-                  <CardDescription>
-                    Recent student activities and requests
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-3">
-                      <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                        <img 
-                          src="https://i.pravatar.cc/150?u=stud2" 
-                          alt="Student" 
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <div>
-                        <p className="font-medium">Emily Chen</p>
-                        <p className="text-xs text-gray-600 mb-1">
-                          Requested a recommendation letter
-                        </p>
-                        <div className="flex gap-2">
-                          <button className="text-xs px-2 py-1 bg-unilink-professor text-white rounded-md">
-                            Approve
-                          </button>
-                          <button className="text-xs px-2 py-1 bg-gray-200 text-gray-800 rounded-md">
-                            Decline
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start gap-3">
-                      <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                        <img 
-                          src="https://i.pravatar.cc/150?u=stud3" 
-                          alt="Student" 
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <div>
-                        <p className="font-medium">Jason Kim</p>
-                        <p className="text-xs text-gray-600">
-                          Submitted project proposal for review
-                        </p>
-                        <p className="text-xs flex items-center mt-1 text-unilink-professor">
-                          <FileText className="h-3 w-3 mr-1" />
-                          <span className="hover:underline cursor-pointer">View Document</span>
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start gap-3">
-                      <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                        <img 
-                          src="https://i.pravatar.cc/150?u=stud4" 
-                          alt="Student" 
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <div>
-                        <p className="font-medium">Maria Rodriguez</p>
-                        <p className="text-xs text-gray-600">
-                          Has questions about the research methodology
-                        </p>
-                        <p className="text-xs flex items-center mt-1 text-unilink-professor">
-                          <Bookmark className="h-3 w-3 mr-1" />
-                          <span className="hover:underline cursor-pointer">Schedule Meeting</span>
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+          </div>
+          
+          {/* Main content - Posts feed */}
+          <div className="lg:col-span-2">
+            <CreatePost />
+            
+            <div className="mt-6 space-y-6">
+              {postsLoading ? (
+                <div className="text-center py-8">Loading posts...</div>
+              ) : posts && posts.length > 0 ? (
+                posts.map((post) => <PostCard key={post.id} post={post} />)
+              ) : (
+                <div className="bg-white rounded-lg shadow p-8 text-center">
+                  <h3 className="font-medium text-lg">No posts yet</h3>
+                  <p className="text-gray-600 mt-2">
+                    Be the first to share something with your university network!
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
