@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
@@ -30,9 +31,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up auth state listener
+    // Set up auth state listener first to prevent missing events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log("Auth state changed:", event);
         setSession(session);
         setCurrentUser(session?.user ?? null);
         
@@ -49,6 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Existing session check:", session ? "Found" : "None");
       setSession(session);
       setCurrentUser(session?.user ?? null);
       
@@ -64,23 +67,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, []);
 
   // Add useEffect to handle redirects based on authentication
   useEffect(() => {
-    if (profile && !isLoading) {
+    if (!isLoading) {
       const currentPath = window.location.pathname;
       
-      // Only redirect if on signin page or root
-      if (currentPath === '/signin' || currentPath === '/') {
-        // Redirect to unified dashboard regardless of role
-        navigate('/dashboard');
+      // Redirect unauthenticated users to signin
+      if (!currentUser && !['/', '/signin', '/signup'].includes(currentPath)) {
+        navigate('/signin');
+        return;
+      }
+      
+      // Redirect authenticated users from signin/signup
+      if (profile && (currentPath === '/signin' || currentPath === '/')) {
+        // Redirect to role-specific dashboard if on specific page
+        if (currentPath === '/signin' || currentPath === '/') {
+          navigate('/dashboard');
+        }
       }
     }
-  }, [profile, isLoading, navigate]);
+  }, [profile, isLoading, navigate, currentUser]);
 
   const fetchProfile = async (userId: string) => {
     try {
+      console.log("Fetching profile for user:", userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -92,6 +104,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
       
+      console.log("Profile fetched:", data);
       setProfile(data as Profile);
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -111,12 +124,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) throw error;
       
       if (data?.user) {
+        console.log("Sign in successful:", data.user.id);
         await fetchProfile(data.user.id);
         toast.success('Welcome back!', {
           description: "You've successfully signed in."
         });
       }
     } catch (error: any) {
+      console.error("Sign in error:", error.message);
       setError(error.message || "Failed to sign in");
       toast.error('Sign in failed', {
         description: error.message || "An error occurred while signing in"
@@ -147,6 +162,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast.success('Account created!', {
         description: "Your account has been successfully created."
       });
+      
+      // Auto sign-in after signup
+      if (data.user) {
+        setTimeout(async () => {
+          await fetchProfile(data.user!.id);
+        }, 1000);
+      }
     } catch (error: any) {
       setError(error.message || "Failed to sign up");
       toast.error('Sign up failed', {
@@ -161,9 +183,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await supabase.auth.signOut();
       setProfile(null);
+      setCurrentUser(null);
+      setSession(null);
       toast.success('Signed out', {
         description: "You've been successfully signed out."
       });
+      navigate('/signin');
     } catch (error: any) {
       toast.error('Error signing out', {
         description: error.message || "An error occurred while signing out"

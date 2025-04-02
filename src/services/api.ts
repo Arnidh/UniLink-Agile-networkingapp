@@ -199,7 +199,10 @@ export const createComment = async (postId: string, content: string) => {
         content,
         user_id: user.id
       })
-      .select('*')
+      .select(`
+        *,
+        profile:profiles(*)
+      `)
       .single();
     
     if (error) throw error;
@@ -269,7 +272,8 @@ export const deleteComment = async (id: string) => {
 // Connections API
 export const getConnections = async (userId: string, status: 'pending' | 'accepted' | 'rejected' | 'all' = 'all') => {
   try {
-    let query = supabase
+    // First get connections where the user is the requester
+    let sentQuery = supabase
       .from('connections')
       .select(`
         *,
@@ -278,13 +282,14 @@ export const getConnections = async (userId: string, status: 'pending' | 'accept
       .eq('requester_id', userId);
     
     if (status !== 'all') {
-      query = query.eq('status', status);
+      sentQuery = sentQuery.eq('status', status);
     }
     
-    const { data: sentConnections, error: sentError } = await query;
+    const { data: sentConnections, error: sentError } = await sentQuery;
     
     if (sentError) throw sentError;
     
+    // Then get connections where the user is the addressee
     let receivedQuery = supabase
       .from('connections')
       .select(`
@@ -301,7 +306,14 @@ export const getConnections = async (userId: string, status: 'pending' | 'accept
     
     if (receivedError) throw receivedError;
     
-    return [...(sentConnections as any), ...(receivedConnections as any)] as Connection[];
+    const allConnections = [...(sentConnections || []), ...(receivedConnections || [])];
+    
+    // Sort by created_at date (newest first)
+    allConnections.sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+    
+    return allConnections as Connection[];
   } catch (error: any) {
     console.error('Error fetching connections:', error);
     toast.error('Error fetching connections', {
@@ -331,11 +343,58 @@ export const getPendingConnectionRequests = async (userId: string) => {
   }
 };
 
+export const checkConnectionStatus = async (userId: string, otherUserId: string) => {
+  try {
+    // Check if there's a connection where the current user is the requester
+    const { data: sentConnection, error: sentError } = await supabase
+      .from('connections')
+      .select('*')
+      .eq('requester_id', userId)
+      .eq('addressee_id', otherUserId)
+      .maybeSingle();
+    
+    if (sentError) throw sentError;
+    
+    if (sentConnection) {
+      return sentConnection.status;
+    }
+    
+    // Check if there's a connection where the current user is the addressee
+    const { data: receivedConnection, error: receivedError } = await supabase
+      .from('connections')
+      .select('*')
+      .eq('requester_id', otherUserId)
+      .eq('addressee_id', userId)
+      .maybeSingle();
+    
+    if (receivedError) throw receivedError;
+    
+    if (receivedConnection) {
+      return receivedConnection.status;
+    }
+    
+    // No connection exists
+    return null;
+  } catch (error: any) {
+    console.error('Error checking connection status:', error);
+    return null;
+  }
+};
+
 export const sendConnectionRequest = async (addresseeId: string) => {
   try {
     // Get current user ID
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
+
+    // Check if a connection request already exists
+    const existing = await checkConnectionStatus(user.id, addresseeId);
+    if (existing) {
+      toast.info('Connection request already exists', {
+        description: `You already have a ${existing} connection with this user.`
+      });
+      return null;
+    }
 
     const { data, error } = await supabase
       .from('connections')
@@ -344,7 +403,10 @@ export const sendConnectionRequest = async (addresseeId: string) => {
         requester_id: user.id,
         status: 'pending'
       })
-      .select('*')
+      .select(`
+        *,
+        profile:profiles!connections_addressee_id_fkey(*)
+      `)
       .single();
     
     if (error) throw error;
@@ -369,7 +431,10 @@ export const respondToConnectionRequest = async (connectionId: string, status: '
       .from('connections')
       .update({ status })
       .eq('id', connectionId)
-      .select('*')
+      .select(`
+        *,
+        profile:profiles!connections_requester_id_fkey(*)
+      `)
       .single();
     
     if (error) throw error;
@@ -391,17 +456,26 @@ export const respondToConnectionRequest = async (connectionId: string, status: '
 // Profiles API
 export const searchProfiles = async (query: string) => {
   try {
+    if (!query.trim()) return [];
+    
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .or(`name.ilike.%${query}%, university.ilike.%${query}%, department.ilike.%${query}%`)
-      .limit(10);
+      .limit(50);
     
     if (error) throw error;
     
-    return data as Profile[];
+    // Get current user ID to exclude from results
+    const { data: { user } } = await supabase.auth.getUser();
+    const filteredData = user ? data.filter(profile => profile.id !== user.id) : data;
+    
+    return filteredData as Profile[];
   } catch (error: any) {
     console.error('Error searching profiles:', error);
+    toast.error('Error searching profiles', {
+      description: error.message || 'An error occurred while searching profiles'
+    });
     return [];
   }
 };
@@ -412,13 +486,45 @@ export const getProfileById = async (userId: string) => {
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
     
     if (error) throw error;
     
     return data as Profile;
   } catch (error: any) {
     console.error('Error fetching profile:', error);
+    toast.error('Error fetching profile', {
+      description: error.message || 'An error occurred while fetching the profile'
+    });
     return null;
+  }
+};
+
+export const getAllProfiles = async (role?: string, limit: number = 50) => {
+  try {
+    let query = supabase
+      .from('profiles')
+      .select('*')
+      .limit(limit);
+    
+    if (role) {
+      query = query.eq('role', role);
+    }
+    
+    const { data, error } = await query;
+    
+    if (error) throw error;
+    
+    // Get current user ID to exclude from results
+    const { data: { user } } = await supabase.auth.getUser();
+    const filteredData = user ? data.filter(profile => profile.id !== user.id) : data;
+    
+    return filteredData as Profile[];
+  } catch (error: any) {
+    console.error('Error fetching profiles:', error);
+    toast.error('Error fetching profiles', {
+      description: error.message || 'An error occurred while fetching profiles'
+    });
+    return [];
   }
 };
