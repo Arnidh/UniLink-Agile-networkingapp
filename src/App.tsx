@@ -11,6 +11,8 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
+import UserProfile from "./pages/UserProfile";
+import Connections from "./pages/Connections";
 import StudentDashboard from "./pages/StudentDashboard";
 import ProfessorDashboard from "./pages/ProfessorDashboard";
 import AlumniDashboard from "./pages/AlumniDashboard";
@@ -31,6 +33,8 @@ const App = () => (
             <Route path="/signup" element={<SignUp />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/:id" element={<UserProfile />} />
+            <Route path="/connections" element={<Connections />} />
             
             {/* Keep old role-specific routes for backward compatibility */}
             <Route path="/student-dashboard" element={<Dashboard />} />

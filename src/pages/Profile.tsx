@@ -2,18 +2,32 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/layout/Header';
-import { Profile as ProfileType } from '@/services/api';
+import { Profile as ProfileType, getConnections } from '@/services/api';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Link2 } from 'lucide-react';
 
 const Profile = () => {
   const { currentUser, profile, isLoading } = useAuth();
   const navigate = useNavigate();
+  const [connectionCount, setConnectionCount] = useState(0);
 
   useEffect(() => {
     if (!isLoading && !currentUser) {
       navigate('/signin');
     }
   }, [currentUser, isLoading, navigate]);
+
+  useEffect(() => {
+    const fetchConnectionCount = async () => {
+      if (currentUser) {
+        const connections = await getConnections(currentUser.id, 'accepted');
+        setConnectionCount(connections.length);
+      }
+    };
+
+    fetchConnectionCount();
+  }, [currentUser]);
 
   if (isLoading || !profile) {
     return (
@@ -71,12 +85,22 @@ const Profile = () => {
                       )}
                     </div>
                   </div>
-                  <button 
-                    onClick={() => navigate('/edit-profile')} 
-                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
-                  >
-                    Edit Profile
-                  </button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline"
+                      className="flex items-center gap-1"
+                      onClick={() => navigate('/connections')}
+                    >
+                      <Link2 className="h-4 w-4" />
+                      Connections ({connectionCount})
+                    </Button>
+                    <Button 
+                      onClick={() => navigate('/edit-profile')} 
+                      className="px-4 py-2"
+                    >
+                      Edit Profile
+                    </Button>
+                  </div>
                 </div>
                 
                 {profile.bio && (
