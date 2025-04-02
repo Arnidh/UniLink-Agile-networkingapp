@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
@@ -67,27 +66,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [navigate]);
 
-  // Add useEffect to handle redirects based on profile role
+  // Add useEffect to handle redirects based on authentication
   useEffect(() => {
     if (profile && !isLoading) {
       const currentPath = window.location.pathname;
       
       // Only redirect if on signin page or root
       if (currentPath === '/signin' || currentPath === '/') {
-        switch (profile.role) {
-          case 'student':
-            navigate('/student-dashboard');
-            break;
-          case 'professor':
-            navigate('/professor-dashboard');
-            break;
-          case 'alumni':
-            navigate('/alumni-dashboard');
-            break;
-          default:
-            // Default to student dashboard if role is unknown
-            navigate('/student-dashboard');
-        }
+        // Redirect to unified dashboard regardless of role
+        navigate('/dashboard');
       }
     }
   }, [profile, isLoading, navigate]);
