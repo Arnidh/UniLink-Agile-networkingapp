@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import UserProfile from "./pages/UserProfile";
 import Connections from "./pages/Connections";
+import Settings from "./pages/Settings";
 import StudentDashboard from "./pages/StudentDashboard";
 import ProfessorDashboard from "./pages/ProfessorDashboard";
 import AlumniDashboard from "./pages/AlumniDashboard";
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/:id" element={<UserProfile />} />
             <Route path="/connections" element={<Connections />} />
+            <Route path="/settings" element={<Settings />} />
             
             {/* Keep old role-specific routes for backward compatibility */}
             <Route path="/student-dashboard" element={<Dashboard />} />
