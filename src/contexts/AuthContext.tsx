@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 import { toast } from "sonner";
-import { Profile } from "@/services/api";
+import { Profile, getProfileById } from "@/services/api";
 import { useNavigate } from "react-router-dom";
 
 export type UserRole = "student" | "professor" | "alumni";
@@ -18,6 +18,7 @@ interface AuthContextType {
   signUp: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,10 +31,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  // This function is defined separately to avoid potential infinite loops
+  const fetchProfile = async (userId: string) => {
+    try {
+      console.log("Fetching profile for user:", userId);
+      const profileData = await getProfileById(userId);
+      
+      if (profileData) {
+        console.log("Profile fetched:", profileData);
+        setProfile(profileData);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+
+  const refreshProfile = async () => {
+    if (currentUser?.id) {
+      await fetchProfile(currentUser.id);
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener first to prevent missing events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log("Auth state changed:", event);
         setSession(session);
         setCurrentUser(session?.user ?? null);
@@ -89,27 +111,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
   }, [profile, isLoading, navigate, currentUser]);
-
-  const fetchProfile = async (userId: string) => {
-    try {
-      console.log("Fetching profile for user:", userId);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-      
-      if (error) {
-        console.error('Error fetching profile:', error);
-        return;
-      }
-      
-      console.log("Profile fetched:", data);
-      setProfile(data as Profile);
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    }
-  };
 
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
@@ -231,7 +232,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       signIn, 
       signUp, 
       signOut,
-      updateProfile
+      updateProfile,
+      refreshProfile
     }}>
       {children}
     </AuthContext.Provider>

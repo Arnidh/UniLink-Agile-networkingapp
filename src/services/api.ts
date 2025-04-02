@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -13,6 +12,13 @@ export interface Profile {
   graduation_year?: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface ProfileStatistics {
+  postsCount: number;
+  connectionsCount: number;
+  commentsCount: number;
+  lastActive?: string;
 }
 
 export interface Post {
@@ -45,6 +51,112 @@ export interface Connection {
   profile?: Profile; // The other user's profile
 }
 
+// Profile Statistics API
+export const getProfileStatistics = async (userId: string): Promise<ProfileStatistics> => {
+  try {
+    // Get post count
+    const { count: postsCount, error: postsError } = await supabase
+      .from('posts')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId);
+    
+    if (postsError) throw postsError;
+    
+    // Get comments count
+    const { count: commentsCount, error: commentsError } = await supabase
+      .from('comments')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId);
+    
+    if (commentsError) throw commentsError;
+    
+    // Get connections count (both sent and received with 'accepted' status)
+    const { data: sentConnections, error: sentError } = await supabase
+      .from('connections')
+      .select('id')
+      .eq('requester_id', userId)
+      .eq('status', 'accepted');
+    
+    if (sentError) throw sentError;
+    
+    const { data: receivedConnections, error: receivedError } = await supabase
+      .from('connections')
+      .select('id')
+      .eq('addressee_id', userId)
+      .eq('status', 'accepted');
+    
+    if (receivedError) throw receivedError;
+    
+    const connectionsCount = (sentConnections?.length || 0) + (receivedConnections?.length || 0);
+    
+    // Get last activity (latest post, comment, or connection)
+    const latestDates = [];
+    
+    // Latest post
+    const { data: latestPost, error: latestPostError } = await supabase
+      .from('posts')
+      .select('created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    if (!latestPostError && latestPost) {
+      latestDates.push(new Date(latestPost.created_at));
+    }
+    
+    // Latest comment
+    const { data: latestComment, error: latestCommentError } = await supabase
+      .from('comments')
+      .select('created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    if (!latestCommentError && latestComment) {
+      latestDates.push(new Date(latestComment.created_at));
+    }
+    
+    // Latest connection
+    const { data: latestConnection, error: latestConnectionError } = await supabase
+      .from('connections')
+      .select('created_at')
+      .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    if (!latestConnectionError && latestConnection) {
+      latestDates.push(new Date(latestConnection.created_at));
+    }
+    
+    // Find the most recent date
+    let lastActive = undefined;
+    if (latestDates.length > 0) {
+      const mostRecentDate = new Date(Math.max(...latestDates.map(date => date.getTime())));
+      lastActive = mostRecentDate.toISOString();
+    }
+    
+    return {
+      postsCount: postsCount || 0,
+      commentsCount: commentsCount || 0,
+      connectionsCount,
+      lastActive
+    };
+  } catch (error: any) {
+    console.error('Error fetching profile statistics:', error);
+    toast.error('Error fetching profile statistics', {
+      description: error.message || 'An error occurred while fetching profile statistics'
+    });
+    return {
+      postsCount: 0,
+      commentsCount: 0,
+      connectionsCount: 0
+    };
+  }
+};
+
 // Posts API
 export const getPosts = async () => {
   try {
@@ -76,6 +188,45 @@ export const getPosts = async () => {
     return postsWithCommentCounts as Post[];
   } catch (error: any) {
     console.error('Error fetching posts:', error);
+    toast.error('Error fetching posts', {
+      description: error.message || 'An error occurred while fetching posts'
+    });
+    return [];
+  }
+};
+
+// Get user's posts
+export const getUserPosts = async (userId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('posts')
+      .select(`
+        *,
+        profile:profiles(*)
+      `)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    // Get comment counts for each post
+    const postsWithCommentCounts = await Promise.all(
+      data.map(async (post: any) => {
+        const { count, error: countError } = await supabase
+          .from('comments')
+          .select('id', { count: 'exact', head: true })
+          .eq('post_id', post.id);
+        
+        return {
+          ...post,
+          comments_count: countError ? 0 : count || 0
+        };
+      })
+    );
+    
+    return postsWithCommentCounts as Post[];
+  } catch (error: any) {
+    console.error('Error fetching user posts:', error);
     toast.error('Error fetching posts', {
       description: error.message || 'An error occurred while fetching posts'
     });
@@ -490,7 +641,7 @@ export const getProfileById = async (userId: string) => {
     
     if (error) throw error;
     
-    return data as Profile;
+    return data as Profile | null;
   } catch (error: any) {
     console.error('Error fetching profile:', error);
     toast.error('Error fetching profile', {
@@ -524,6 +675,80 @@ export const getAllProfiles = async (role?: string, limit: number = 50) => {
     console.error('Error fetching profiles:', error);
     toast.error('Error fetching profiles', {
       description: error.message || 'An error occurred while fetching profiles'
+    });
+    return [];
+  }
+};
+
+// Department Statistics
+export const getDepartmentStatistics = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('department, count')
+      .not('department', 'is', null)
+      .group('department');
+    
+    if (error) throw error;
+    
+    // Convert to format suitable for charts
+    return data.map(item => ({
+      name: item.department,
+      value: item.count
+    }));
+  } catch (error: any) {
+    console.error('Error fetching department statistics:', error);
+    toast.error('Error fetching statistics', {
+      description: error.message || 'An error occurred while fetching statistics'
+    });
+    return [];
+  }
+};
+
+// University Statistics
+export const getUniversityStatistics = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('university, count')
+      .not('university', 'is', null)
+      .group('university');
+    
+    if (error) throw error;
+    
+    // Convert to format suitable for charts
+    return data.map(item => ({
+      name: item.university,
+      value: item.count
+    }));
+  } catch (error: any) {
+    console.error('Error fetching university statistics:', error);
+    toast.error('Error fetching statistics', {
+      description: error.message || 'An error occurred while fetching statistics'
+    });
+    return [];
+  }
+};
+
+// Role Statistics
+export const getRoleStatistics = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('role, count')
+      .group('role');
+    
+    if (error) throw error;
+    
+    // Convert to format suitable for charts
+    return data.map(item => ({
+      name: item.role,
+      value: item.count
+    }));
+  } catch (error: any) {
+    console.error('Error fetching role statistics:', error);
+    toast.error('Error fetching statistics', {
+      description: error.message || 'An error occurred while fetching statistics'
     });
     return [];
   }

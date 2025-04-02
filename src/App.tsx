@@ -14,12 +14,28 @@ import Profile from "./pages/Profile";
 import UserProfile from "./pages/UserProfile";
 import Connections from "./pages/Connections";
 import Settings from "./pages/Settings";
-import StudentDashboard from "./pages/StudentDashboard";
-import ProfessorDashboard from "./pages/ProfessorDashboard";
-import AlumniDashboard from "./pages/AlumniDashboard";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+// Create a client with error handling
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      onError: (error: unknown) => {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        console.error('Query error:', errorMessage);
+      },
+    },
+    mutations: {
+      onError: (error: unknown) => {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        console.error('Mutation error:', errorMessage);
+      },
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

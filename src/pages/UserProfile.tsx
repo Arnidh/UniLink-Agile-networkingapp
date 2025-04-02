@@ -1,81 +1,76 @@
 
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import Header from '@/components/layout/Header';
-import { Profile, getProfileById, sendConnectionRequest, getConnections } from '@/services/api';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserPlus, Check, Clock } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import Header from "@/components/layout/Header";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UserCheck, UserPlus, UserX, User, Book, Building, GraduationCap, Calendar } from "lucide-react";
+import PostCard from "@/components/posts/PostCard";
+import ProfileStatistics from "@/components/profiles/ProfileStatistics";
+import { useQuery } from "@tanstack/react-query";
+import { Profile, getUserPosts, getProfileById, checkConnectionStatus, sendConnectionRequest } from "@/services/api";
 
 const UserProfile = () => {
   const { id } = useParams<{ id: string }>();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
-  
-  const [userProfile, setUserProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [connectionStatus, setConnectionStatus] = useState<'none' | 'pending' | 'connected'>('none');
-  const [isRequestingConnection, setIsRequestingConnection] = useState(false);
-
+  
   useEffect(() => {
     if (!id) {
-      navigate('/connections');
+      navigate("/dashboard");
       return;
     }
-
-    const loadProfile = async () => {
+    
+    // Redirect if user is trying to view their own profile
+    if (currentUser?.id === id) {
+      navigate("/profile");
+      return;
+    }
+    
+    const fetchProfileData = async () => {
       setIsLoading(true);
-      try {
-        const profile = await getProfileById(id);
-        if (profile) {
-          setUserProfile(profile);
-          
-          // Check connection status if logged in
-          if (currentUser) {
-            const connections = await getConnections(currentUser.id, 'all');
-            const connection = connections.find(conn => 
-              (conn.requester_id === currentUser.id && conn.addressee_id === id) ||
-              (conn.requester_id === id && conn.addressee_id === currentUser.id)
-            );
-            
-            if (connection) {
-              if (connection.status === 'accepted') {
-                setConnectionStatus('connected');
-              } else if (connection.status === 'pending') {
-                setConnectionStatus('pending');
-              }
-            }
-          }
-        } else {
-          navigate('/not-found');
+      const profileData = await getProfileById(id);
+      
+      if (profileData) {
+        setProfile(profileData);
+        
+        if (currentUser) {
+          const status = await checkConnectionStatus(currentUser.id, id);
+          setConnectionStatus(status);
         }
-      } catch (error) {
-        console.error('Error loading profile:', error);
-      } finally {
-        setIsLoading(false);
+      } else {
+        // Profile not found, redirect
+        navigate("/dashboard");
       }
+      
+      setIsLoading(false);
     };
     
-    loadProfile();
+    fetchProfileData();
   }, [id, currentUser, navigate]);
-
+  
+  const { data: userPosts = [] } = useQuery({
+    queryKey: ['userPosts', id],
+    queryFn: () => id ? getUserPosts(id) : Promise.resolve([]),
+    enabled: !!id,
+  });
+  
   const handleConnect = async () => {
     if (!id || !currentUser) return;
     
-    setIsRequestingConnection(true);
-    try {
-      await sendConnectionRequest(id);
+    const connection = await sendConnectionRequest(id);
+    if (connection) {
       setConnectionStatus('pending');
-    } catch (error) {
-      console.error('Error sending connection request:', error);
-    } finally {
-      setIsRequestingConnection(false);
     }
   };
-
+  
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -83,134 +78,178 @@ const UserProfile = () => {
       .join("")
       .toUpperCase();
   };
-
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
-      case 'student':
-        return 'bg-blue-100 text-blue-800';
-      case 'professor':
-        return 'bg-green-100 text-green-800';
-      case 'alumni':
-        return 'bg-purple-100 text-purple-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+  
+  const getConnectionButtonContent = () => {
+    if (!connectionStatus) {
+      return (
+        <Button 
+          className="w-full"
+          onClick={handleConnect}
+        >
+          <UserPlus className="h-4 w-4 mr-2" />
+          Connect
+        </Button>
+      );
     }
+    
+    if (connectionStatus === 'pending') {
+      return (
+        <Button 
+          variant="outline"
+          className="w-full"
+          disabled
+        >
+          <User className="h-4 w-4 mr-2" />
+          Connection Pending
+        </Button>
+      );
+    }
+    
+    if (connectionStatus === 'accepted') {
+      return (
+        <Button 
+          variant="outline"
+          className="w-full bg-green-50"
+          disabled
+        >
+          <UserCheck className="h-4 w-4 mr-2 text-green-500" />
+          Connected
+        </Button>
+      );
+    }
+    
+    if (connectionStatus === 'rejected') {
+      return (
+        <Button 
+          variant="outline"
+          className="w-full"
+          disabled
+        >
+          <UserX className="h-4 w-4 mr-2" />
+          Connection Rejected
+        </Button>
+      );
+    }
+    
+    return null;
   };
-
-  if (isLoading) {
+  
+  if (isLoading || !profile) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen flex flex-col">
         <Header />
-        <div className="container py-8 flex justify-center items-center">
-          <p className="text-lg text-gray-500">Loading profile...</p>
-        </div>
+        <main className="flex-1 py-8">
+          <div className="container px-4">
+            <div className="text-center py-10">
+              <div className="animate-pulse">
+                <div className="h-32 w-32 bg-gray-200 rounded-full mx-auto mb-4"></div>
+                <div className="h-8 bg-gray-200 rounded w-48 mx-auto mb-4"></div>
+                <div className="h-4 bg-gray-200 rounded w-24 mx-auto mb-8"></div>
+                <div className="h-48 bg-gray-200 rounded max-w-md mx-auto"></div>
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
-
-  if (!userProfile) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="container py-8 flex justify-center items-center">
-          <p className="text-lg text-gray-500">Profile not found</p>
-        </div>
-      </div>
-    );
-  }
-
+  
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen flex flex-col">
       <Header />
       
-      <main className="container py-8">
-        <div className="max-w-4xl mx-auto">
-          {/* Profile header */}
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="h-40 bg-gradient-to-r from-unilink-primary to-unilink-secondary"></div>
-            <div className="relative px-6 pb-6">
-              <div className="absolute -top-16 left-6">
-                <div className="h-32 w-32 rounded-full border-4 border-white bg-white overflow-hidden">
-                  <img 
-                    src={userProfile.profile_picture || "/placeholder.svg"} 
-                    alt={userProfile.name} 
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              </div>
-              <div className="pt-20">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h1 className="text-2xl font-bold">{userProfile.name}</h1>
-                    <div className="mt-1 flex items-center gap-3">
-                      <span className={`text-xs px-2 py-1 rounded-full capitalize ${getRoleBadgeColor(userProfile.role)}`}>
-                        {userProfile.role}
-                      </span>
-                      {userProfile.university && (
-                        <span className="text-sm text-gray-600">{userProfile.university}</span>
-                      )}
+      <main className="flex-1 py-8">
+        <div className="container px-4">
+          <h1 className="text-3xl font-bold mb-8">{profile.name}'s Profile</h1>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-1">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex flex-col items-center text-center mb-6">
+                    <Avatar className="h-24 w-24 mb-4">
+                      <AvatarImage src={profile.profile_picture} alt={profile.name} />
+                      <AvatarFallback className="text-lg">{getInitials(profile.name)}</AvatarFallback>
+                    </Avatar>
+                    
+                    <h2 className="text-2xl font-bold">{profile.name}</h2>
+                    <Badge className="mt-2 capitalize">{profile.role}</Badge>
+                    
+                    <div className="mt-4 w-full">
+                      {getConnectionButtonContent()}
                     </div>
                   </div>
                   
-                  {currentUser && currentUser.id !== id && (
-                    <div>
-                      {connectionStatus === 'none' && (
-                        <Button 
-                          onClick={handleConnect}
-                          disabled={isRequestingConnection}
-                          className="flex items-center gap-1"
-                        >
-                          <UserPlus className="h-4 w-4" />
-                          Connect
-                        </Button>
-                      )}
-                      {connectionStatus === 'pending' && (
-                        <Button variant="outline" disabled className="flex items-center gap-1">
-                          <Clock className="h-4 w-4" />
-                          Pending
-                        </Button>
-                      )}
-                      {connectionStatus === 'connected' && (
-                        <Button variant="outline" className="flex items-center gap-1 bg-green-50">
-                          <Check className="h-4 w-4 text-green-600" />
-                          <span className="text-green-600">Connected</span>
-                        </Button>
-                      )}
+                  <div className="space-y-4">
+                    {profile.bio && (
+                      <div>
+                        <h3 className="font-medium text-sm flex items-center mb-2 text-gray-500">
+                          <Book className="h-4 w-4 mr-2" /> Bio
+                        </h3>
+                        <p className="text-sm">{profile.bio}</p>
+                      </div>
+                    )}
+                    
+                    {profile.university && (
+                      <div>
+                        <h3 className="font-medium text-sm flex items-center mb-2 text-gray-500">
+                          <Building className="h-4 w-4 mr-2" /> University
+                        </h3>
+                        <p className="font-medium">{profile.university}</p>
+                      </div>
+                    )}
+                    
+                    {profile.department && (
+                      <div>
+                        <h3 className="font-medium text-sm flex items-center mb-2 text-gray-500">
+                          <GraduationCap className="h-4 w-4 mr-2" /> Department
+                        </h3>
+                        <p className="font-medium">{profile.department}</p>
+                      </div>
+                    )}
+                    
+                    {profile.graduation_year && (
+                      <div>
+                        <h3 className="font-medium text-sm flex items-center mb-2 text-gray-500">
+                          <Calendar className="h-4 w-4 mr-2" /> Graduation Year
+                        </h3>
+                        <p className="font-medium">{profile.graduation_year}</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div className="lg:col-span-2">
+              {/* Profile Statistics */}
+              <ProfileStatistics userId={profile.id} />
+              
+              <Tabs defaultValue="posts" className="w-full">
+                <TabsList>
+                  <TabsTrigger value="posts">Posts</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="posts">
+                  {userPosts.length === 0 ? (
+                    <div className="text-center py-8 border rounded-lg bg-gray-50 mt-4">
+                      <User className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                      <h3 className="text-lg font-semibold">No posts yet</h3>
+                      <p className="text-gray-500">{profile.name} hasn't created any posts yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 mt-4">
+                      {userPosts.map(post => (
+                        <PostCard 
+                          key={post.id} 
+                          post={post} 
+                          readOnly={true}
+                        />
+                      ))}
                     </div>
                   )}
-                </div>
-                
-                {userProfile.bio && (
-                  <div className="mt-6">
-                    <h2 className="text-lg font-semibold mb-2">About</h2>
-                    <p className="text-gray-700">{userProfile.bio}</p>
-                  </div>
-                )}
-                
-                <div className="mt-6 border-t pt-6">
-                  <h2 className="text-lg font-semibold mb-4">Details</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {userProfile.department && (
-                      <div>
-                        <h3 className="text-sm font-medium text-gray-500">Department</h3>
-                        <p className="text-gray-700">{userProfile.department}</p>
-                      </div>
-                    )}
-                    
-                    {userProfile.graduation_year && (
-                      <div>
-                        <h3 className="text-sm font-medium text-gray-500">Graduation Year</h3>
-                        <p className="text-gray-700">{userProfile.graduation_year}</p>
-                      </div>
-                    )}
-                    
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">Member Since</h3>
-                      <p className="text-gray-700">{new Date(userProfile.created_at).toLocaleDateString()}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
         </div>
