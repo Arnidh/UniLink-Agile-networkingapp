@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/layout/Header';
@@ -9,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Users, Link, Settings, Calendar, Bookmark, Network, Bell, Search, Briefcase, GraduationCap } from 'lucide-react';
+import { Users, Link, Settings, Calendar, Bookmark, Network, Bell, Search, Briefcase, GraduationCap, User } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -24,7 +23,6 @@ const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
-  // Example university events - would come from API in a real app
   const universityEvents = [
     {
       id: '1',
@@ -81,7 +79,7 @@ const Dashboard = () => {
     const loadConnections = async () => {
       if (currentUser) {
         const userConnections = await getConnections(currentUser.id, 'accepted');
-        setConnections(userConnections.slice(0, 5)); // Show only 5 most recent connections
+        setConnections(userConnections.slice(0, 5));
       }
     };
 
@@ -152,7 +150,6 @@ const Dashboard = () => {
       
       <main className="container py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Left sidebar - User Profile Summary */}
           <div className="lg:col-span-3">
             <Card className="mb-6">
               <CardContent className="p-6">
@@ -214,7 +211,6 @@ const Dashboard = () => {
             </Card>
           </div>
           
-          {/* Main content area - Tabs for Feed and Network */}
           <div className="lg:col-span-6">
             <Tabs 
               defaultValue={activeTab} 
@@ -369,7 +365,6 @@ const Dashboard = () => {
             </Tabs>
           </div>
           
-          {/* Right sidebar - Connections */}
           <div className="lg:col-span-3">
             <div className="bg-white rounded-lg shadow p-6 mb-6">
               <div className="flex justify-between items-center mb-4">
