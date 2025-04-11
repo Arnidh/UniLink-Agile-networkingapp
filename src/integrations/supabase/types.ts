@@ -169,7 +169,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_department_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          name: string
+          value: number
+        }[]
+      }
+      get_role_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          name: string
+          value: number
+        }[]
+      }
+      get_university_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          name: string
+          value: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

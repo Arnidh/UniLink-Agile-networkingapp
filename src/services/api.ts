@@ -51,10 +51,8 @@ export interface Connection {
   profile?: Profile; // The other user's profile
 }
 
-// Profile Statistics API
 export const getProfileStatistics = async (userId: string): Promise<ProfileStatistics> => {
   try {
-    // Get post count
     const { count: postsCount, error: postsError } = await supabase
       .from('posts')
       .select('id', { count: 'exact', head: true })
@@ -62,7 +60,6 @@ export const getProfileStatistics = async (userId: string): Promise<ProfileStati
     
     if (postsError) throw postsError;
     
-    // Get comments count
     const { count: commentsCount, error: commentsError } = await supabase
       .from('comments')
       .select('id', { count: 'exact', head: true })
@@ -70,7 +67,6 @@ export const getProfileStatistics = async (userId: string): Promise<ProfileStati
     
     if (commentsError) throw commentsError;
     
-    // Get connections count (both sent and received with 'accepted' status)
     const { data: sentConnections, error: sentError } = await supabase
       .from('connections')
       .select('id')
@@ -89,10 +85,8 @@ export const getProfileStatistics = async (userId: string): Promise<ProfileStati
     
     const connectionsCount = (sentConnections?.length || 0) + (receivedConnections?.length || 0);
     
-    // Get last activity (latest post, comment, or connection)
     const latestDates = [];
     
-    // Latest post
     const { data: latestPost, error: latestPostError } = await supabase
       .from('posts')
       .select('created_at')
@@ -105,7 +99,6 @@ export const getProfileStatistics = async (userId: string): Promise<ProfileStati
       latestDates.push(new Date(latestPost.created_at));
     }
     
-    // Latest comment
     const { data: latestComment, error: latestCommentError } = await supabase
       .from('comments')
       .select('created_at')
@@ -118,7 +111,6 @@ export const getProfileStatistics = async (userId: string): Promise<ProfileStati
       latestDates.push(new Date(latestComment.created_at));
     }
     
-    // Latest connection
     const { data: latestConnection, error: latestConnectionError } = await supabase
       .from('connections')
       .select('created_at')
@@ -131,7 +123,6 @@ export const getProfileStatistics = async (userId: string): Promise<ProfileStati
       latestDates.push(new Date(latestConnection.created_at));
     }
     
-    // Find the most recent date
     let lastActive = undefined;
     if (latestDates.length > 0) {
       const mostRecentDate = new Date(Math.max(...latestDates.map(date => date.getTime())));
@@ -157,7 +148,6 @@ export const getProfileStatistics = async (userId: string): Promise<ProfileStati
   }
 };
 
-// Posts API
 export const getPosts = async () => {
   try {
     const { data, error } = await supabase
@@ -170,7 +160,6 @@ export const getPosts = async () => {
     
     if (error) throw error;
     
-    // Get comment counts for each post
     const postsWithCommentCounts = await Promise.all(
       data.map(async (post: any) => {
         const { count, error: countError } = await supabase
@@ -195,7 +184,6 @@ export const getPosts = async () => {
   }
 };
 
-// Get user's posts
 export const getUserPosts = async (userId: string) => {
   try {
     const { data, error } = await supabase
@@ -209,7 +197,6 @@ export const getUserPosts = async (userId: string) => {
     
     if (error) throw error;
     
-    // Get comment counts for each post
     const postsWithCommentCounts = await Promise.all(
       data.map(async (post: any) => {
         const { count, error: countError } = await supabase
@@ -236,7 +223,6 @@ export const getUserPosts = async (userId: string) => {
 
 export const createPost = async (content: string) => {
   try {
-    // Get current user ID
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
 
@@ -313,7 +299,6 @@ export const deletePost = async (id: string) => {
   }
 };
 
-// Comments API
 export const getComments = async (postId: string) => {
   try {
     const { data, error } = await supabase
@@ -339,7 +324,6 @@ export const getComments = async (postId: string) => {
 
 export const createComment = async (postId: string, content: string) => {
   try {
-    // Get current user ID
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
 
@@ -420,10 +404,8 @@ export const deleteComment = async (id: string) => {
   }
 };
 
-// Connections API
 export const getConnections = async (userId: string, status: 'pending' | 'accepted' | 'rejected' | 'all' = 'all') => {
   try {
-    // First get connections where the user is the requester
     let sentQuery = supabase
       .from('connections')
       .select(`
@@ -440,7 +422,6 @@ export const getConnections = async (userId: string, status: 'pending' | 'accept
     
     if (sentError) throw sentError;
     
-    // Then get connections where the user is the addressee
     let receivedQuery = supabase
       .from('connections')
       .select(`
@@ -459,7 +440,6 @@ export const getConnections = async (userId: string, status: 'pending' | 'accept
     
     const allConnections = [...(sentConnections || []), ...(receivedConnections || [])];
     
-    // Sort by created_at date (newest first)
     allConnections.sort((a, b) => 
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
@@ -496,7 +476,6 @@ export const getPendingConnectionRequests = async (userId: string) => {
 
 export const checkConnectionStatus = async (userId: string, otherUserId: string) => {
   try {
-    // Check if there's a connection where the current user is the requester
     const { data: sentConnection, error: sentError } = await supabase
       .from('connections')
       .select('*')
@@ -510,7 +489,6 @@ export const checkConnectionStatus = async (userId: string, otherUserId: string)
       return sentConnection.status;
     }
     
-    // Check if there's a connection where the current user is the addressee
     const { data: receivedConnection, error: receivedError } = await supabase
       .from('connections')
       .select('*')
@@ -524,7 +502,6 @@ export const checkConnectionStatus = async (userId: string, otherUserId: string)
       return receivedConnection.status;
     }
     
-    // No connection exists
     return null;
   } catch (error: any) {
     console.error('Error checking connection status:', error);
@@ -534,11 +511,9 @@ export const checkConnectionStatus = async (userId: string, otherUserId: string)
 
 export const sendConnectionRequest = async (addresseeId: string) => {
   try {
-    // Get current user ID
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
 
-    // Check if a connection request already exists
     const existing = await checkConnectionStatus(user.id, addresseeId);
     if (existing) {
       toast.info('Connection request already exists', {
@@ -604,7 +579,6 @@ export const respondToConnectionRequest = async (connectionId: string, status: '
   }
 };
 
-// Profiles API
 export const searchProfiles = async (query: string) => {
   try {
     if (!query.trim()) return [];
@@ -617,7 +591,6 @@ export const searchProfiles = async (query: string) => {
     
     if (error) throw error;
     
-    // Get current user ID to exclude from results
     const { data: { user } } = await supabase.auth.getUser();
     const filteredData = user ? data.filter(profile => profile.id !== user.id) : data;
     
@@ -666,7 +639,6 @@ export const getAllProfiles = async (role?: string, limit: number = 50) => {
     
     if (error) throw error;
     
-    // Get current user ID to exclude from results
     const { data: { user } } = await supabase.auth.getUser();
     const filteredData = user ? data.filter(profile => profile.id !== user.id) : data;
     
@@ -680,17 +652,13 @@ export const getAllProfiles = async (role?: string, limit: number = 50) => {
   }
 };
 
-// Department Statistics
 export const getDepartmentStatistics = async () => {
   try {
-    // Supabase JS client doesn't support GROUP BY directly
-    // Use raw SQL query instead
     const { data, error } = await supabase
       .rpc('get_department_stats');
     
     if (error) throw error;
     
-    // Convert to format suitable for charts
     return data || [];
   } catch (error: any) {
     console.error('Error fetching department statistics:', error);
@@ -701,17 +669,13 @@ export const getDepartmentStatistics = async () => {
   }
 };
 
-// University Statistics
 export const getUniversityStatistics = async () => {
   try {
-    // Supabase JS client doesn't support GROUP BY directly
-    // Use raw SQL query instead
     const { data, error } = await supabase
       .rpc('get_university_stats');
     
     if (error) throw error;
     
-    // Convert to format suitable for charts
     return data || [];
   } catch (error: any) {
     console.error('Error fetching university statistics:', error);
@@ -722,17 +686,13 @@ export const getUniversityStatistics = async () => {
   }
 };
 
-// Role Statistics
 export const getRoleStatistics = async () => {
   try {
-    // Supabase JS client doesn't support GROUP BY directly
-    // Use raw SQL query instead
     const { data, error } = await supabase
       .rpc('get_role_stats');
     
     if (error) throw error;
     
-    // Convert to format suitable for charts
     return data || [];
   } catch (error: any) {
     console.error('Error fetching role statistics:', error);

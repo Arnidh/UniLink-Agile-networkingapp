@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/layout/Header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +27,6 @@ const UserProfile = () => {
       return;
     }
     
-    // Redirect if user is trying to view their own profile
     if (currentUser?.id === id) {
       navigate("/profile");
       return;
@@ -46,7 +44,6 @@ const UserProfile = () => {
           setConnectionStatus(status);
         }
       } else {
-        // Profile not found, redirect
         navigate("/dashboard");
       }
       
@@ -160,7 +157,7 @@ const UserProfile = () => {
       
       <main className="flex-1 py-8">
         <div className="container px-4">
-          <h1 className="text-3xl font-bold mb-8">{profile.name}'s Profile</h1>
+          <h1 className="text-3xl font-bold mb-8">{profile?.name}'s Profile</h1>
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1">
@@ -168,12 +165,12 @@ const UserProfile = () => {
                 <CardContent className="pt-6">
                   <div className="flex flex-col items-center text-center mb-6">
                     <Avatar className="h-24 w-24 mb-4">
-                      <AvatarImage src={profile.profile_picture} alt={profile.name} />
-                      <AvatarFallback className="text-lg">{getInitials(profile.name)}</AvatarFallback>
+                      <AvatarImage src={profile?.profile_picture} alt={profile?.name} />
+                      <AvatarFallback className="text-lg">{getInitials(profile?.name)}</AvatarFallback>
                     </Avatar>
                     
-                    <h2 className="text-2xl font-bold">{profile.name}</h2>
-                    <Badge className="mt-2 capitalize">{profile.role}</Badge>
+                    <h2 className="text-2xl font-bold">{profile?.name}</h2>
+                    <Badge className="mt-2 capitalize">{profile?.role}</Badge>
                     
                     <div className="mt-4 w-full">
                       {getConnectionButtonContent()}
@@ -181,39 +178,39 @@ const UserProfile = () => {
                   </div>
                   
                   <div className="space-y-4">
-                    {profile.bio && (
+                    {profile?.bio && (
                       <div>
                         <h3 className="font-medium text-sm flex items-center mb-2 text-gray-500">
                           <Book className="h-4 w-4 mr-2" /> Bio
                         </h3>
-                        <p className="text-sm">{profile.bio}</p>
+                        <p className="text-sm">{profile?.bio}</p>
                       </div>
                     )}
                     
-                    {profile.university && (
+                    {profile?.university && (
                       <div>
                         <h3 className="font-medium text-sm flex items-center mb-2 text-gray-500">
                           <Building className="h-4 w-4 mr-2" /> University
                         </h3>
-                        <p className="font-medium">{profile.university}</p>
+                        <p className="font-medium">{profile?.university}</p>
                       </div>
                     )}
                     
-                    {profile.department && (
+                    {profile?.department && (
                       <div>
                         <h3 className="font-medium text-sm flex items-center mb-2 text-gray-500">
                           <GraduationCap className="h-4 w-4 mr-2" /> Department
                         </h3>
-                        <p className="font-medium">{profile.department}</p>
+                        <p className="font-medium">{profile?.department}</p>
                       </div>
                     )}
                     
-                    {profile.graduation_year && (
+                    {profile?.graduation_year && (
                       <div>
                         <h3 className="font-medium text-sm flex items-center mb-2 text-gray-500">
                           <Calendar className="h-4 w-4 mr-2" /> Graduation Year
                         </h3>
-                        <p className="font-medium">{profile.graduation_year}</p>
+                        <p className="font-medium">{profile?.graduation_year}</p>
                       </div>
                     )}
                   </div>
@@ -222,8 +219,7 @@ const UserProfile = () => {
             </div>
             
             <div className="lg:col-span-2">
-              {/* Profile Statistics */}
-              <ProfileStatistics userId={profile.id} />
+              {profile && <ProfileStatistics userId={profile.id} />}
               
               <Tabs defaultValue="posts" className="w-full">
                 <TabsList>
@@ -235,7 +231,7 @@ const UserProfile = () => {
                     <div className="text-center py-8 border rounded-lg bg-gray-50 mt-4">
                       <User className="h-12 w-12 text-gray-400 mx-auto mb-3" />
                       <h3 className="text-lg font-semibold">No posts yet</h3>
-                      <p className="text-gray-500">{profile.name} hasn't created any posts yet</p>
+                      <p className="text-gray-500">{profile?.name} hasn't created any posts yet</p>
                     </div>
                   ) : (
                     <div className="space-y-4 mt-4">
@@ -243,7 +239,6 @@ const UserProfile = () => {
                         <PostCard 
                           key={post.id} 
                           post={post} 
-                          readOnly={true}
                         />
                       ))}
                     </div>

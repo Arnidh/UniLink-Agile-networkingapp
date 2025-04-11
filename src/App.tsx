@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -25,7 +26,7 @@ const queryClient = new QueryClient({
       staleTime: 1000 * 60 * 5, // 5 minutes
     },
     mutations: {
-      // Use meta.onError for error handling
+      // Updated error handling approach
       meta: {
         onError: (error: unknown) => {
           const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
