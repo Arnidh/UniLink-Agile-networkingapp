@@ -40,7 +40,7 @@ const Index = () => {
               <div className="relative">
                 <div className="absolute -z-10 w-3/4 h-3/4 bg-unilink-accent rounded-full filter blur-3xl opacity-30"></div>
                 <img
-                  src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80"
+                  src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80"
                   alt="University students collaborating"
                   className="rounded-lg shadow-2xl"
                 />

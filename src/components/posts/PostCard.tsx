@@ -1,11 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MessageSquare, ThumbsUp, Share, MoreVertical, Trash2, Edit } from 'lucide-react';
-import { Post, deletePost } from '@/services/api';
+import { Post, deletePost, likePost, unlikePost, hasUserLikedPost, getPostLikes } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   DropdownMenu,
@@ -22,7 +22,7 @@ interface PostCardProps {
   post: Post;
   onPostDeleted?: () => void;
   onPostUpdated?: (updatedPost: Post) => void;
-  readOnly?: boolean; // Add this new prop
+  readOnly?: boolean;
 }
 
 const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostUpdated, readOnly = false }) => {
@@ -31,8 +31,43 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostUpdated,
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(post.content);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
+  const [isLikeLoading, setIsLikeLoading] = useState(false);
   
   const isOwnPost = currentUser?.id === post.user_id;
+  
+  useEffect(() => {
+    const checkLikeStatus = async () => {
+      if (currentUser) {
+        const hasLiked = await hasUserLikedPost(post.id);
+        setLiked(hasLiked);
+      }
+      
+      const count = await getPostLikes(post.id);
+      setLikesCount(count);
+    };
+    
+    checkLikeStatus();
+  }, [post.id, currentUser]);
+  
+  const handleLikeToggle = async () => {
+    if (!currentUser) return;
+    
+    setIsLikeLoading(true);
+    
+    if (liked) {
+      await unlikePost(post.id);
+      setLiked(false);
+      setLikesCount(prev => Math.max(0, prev - 1));
+    } else {
+      await likePost(post.id);
+      setLiked(true);
+      setLikesCount(prev => prev + 1);
+    }
+    
+    setIsLikeLoading(false);
+  };
   
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -113,9 +148,15 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostUpdated,
       
       <CardFooter className="flex-col items-stretch pt-0 pb-2 border-t">
         <div className="flex justify-between py-2">
-          <Button variant="ghost" size="sm" className="flex gap-1 items-center text-gray-600">
-            <ThumbsUp className="h-4 w-4" />
-            <span>Like</span>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className={`flex gap-1 items-center ${liked ? 'text-blue-600' : 'text-gray-600'}`}
+            onClick={handleLikeToggle}
+            disabled={isLikeLoading || !currentUser}
+          >
+            <ThumbsUp className={`h-4 w-4 ${liked ? 'fill-current' : ''}`} />
+            <span>{liked ? 'Liked' : 'Like'}{likesCount > 0 ? ` (${likesCount})` : ''}</span>
           </Button>
           <Button 
             variant="ghost" 

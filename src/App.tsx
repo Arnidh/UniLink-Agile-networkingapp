@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,6 +15,7 @@ import UserProfile from "./pages/UserProfile";
 import Connections from "./pages/Connections";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import Messages from "./pages/Messages";
 
 // Create a client with error handling
 const queryClient = new QueryClient({
@@ -53,6 +53,7 @@ const App = () => (
             <Route path="/profile/:id" element={<UserProfile />} />
             <Route path="/connections" element={<Connections />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/messages" element={<Messages />} />
             
             {/* Keep old role-specific routes for backward compatibility */}
             <Route path="/student-dashboard" element={<Dashboard />} />

@@ -51,6 +51,13 @@ export interface Connection {
   profile?: Profile; // The other user's profile
 }
 
+export interface Like {
+  id: string;
+  user_id: string;
+  post_id: string;
+  created_at: string;
+}
+
 export const getProfileStatistics = async (userId: string): Promise<ProfileStatistics> => {
   try {
     const { count: postsCount, error: postsError } = await supabase
@@ -700,5 +707,183 @@ export const getRoleStatistics = async () => {
       description: error.message || 'An error occurred while fetching statistics'
     });
     return [];
+  }
+};
+
+export const likePost = async (postId: string) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
+    const { error } = await supabase
+      .from('likes')
+      .insert({ 
+        post_id: postId,
+        user_id: user.id 
+      });
+    
+    if (error) {
+      if (error.code === '23505') {
+        return true;
+      }
+      throw error;
+    }
+    
+    return true;
+  } catch (error: any) {
+    console.error('Error liking post:', error);
+    toast.error('Error liking post', {
+      description: error.message || 'An error occurred while liking the post'
+    });
+    return false;
+  }
+};
+
+export const unlikePost = async (postId: string) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
+    const { error } = await supabase
+      .from('likes')
+      .delete()
+      .match({ 
+        post_id: postId,
+        user_id: user.id 
+      });
+    
+    if (error) throw error;
+    
+    return true;
+  } catch (error: any) {
+    console.error('Error unliking post:', error);
+    toast.error('Error unliking post', {
+      description: error.message || 'An error occurred while unliking the post'
+    });
+    return false;
+  }
+};
+
+export const getPostLikes = async (postId: string) => {
+  try {
+    const { data, error } = await supabase
+      .rpc('get_post_likes_count', {
+        post_id_param: postId
+      });
+    
+    if (error) throw error;
+    
+    return data || 0;
+  } catch (error: any) {
+    console.error('Error getting post likes:', error);
+    return 0;
+  }
+};
+
+export const hasUserLikedPost = async (postId: string) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const { data, error } = await supabase
+      .rpc('has_user_liked_post', {
+        user_id_param: user.id,
+        post_id_param: postId
+      });
+    
+    if (error) throw error;
+    
+    return data || false;
+  } catch (error: any) {
+    console.error('Error checking if user liked post:', error);
+    return false;
+  }
+};
+
+export const sendMessage = async (recipientId: string, content: string) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({ 
+        sender_id: user.id,
+        recipient_id: recipientId,
+        content
+      })
+      .select('*')
+      .single();
+    
+    if (error) throw error;
+    
+    toast.success('Message sent');
+    
+    return data;
+  } catch (error: any) {
+    console.error('Error sending message:', error);
+    toast.error('Error sending message', {
+      description: error.message || 'An error occurred while sending the message'
+    });
+    return null;
+  }
+};
+
+export const getMessages = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    return data;
+  } catch (error: any) {
+    console.error('Error fetching messages:', error);
+    toast.error('Error fetching messages', {
+      description: error.message || 'An error occurred while fetching messages'
+    });
+    return [];
+  }
+};
+
+export const markMessageAsRead = async (messageId: string) => {
+  try {
+    const { error } = await supabase
+      .from('messages')
+      .update({ read: true })
+      .eq('id', messageId);
+    
+    if (error) throw error;
+    
+    return true;
+  } catch (error: any) {
+    console.error('Error marking message as read:', error);
+    return false;
+  }
+};
+
+export const getUnreadMessagesCount = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return 0;
+
+    const { count, error } = await supabase
+      .from('messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('recipient_id', user.id)
+      .eq('read', false);
+    
+    if (error) throw error;
+    
+    return count || 0;
+  } catch (error: any) {
+    console.error('Error getting unread messages count:', error);
+    return 0;
   }
 };
