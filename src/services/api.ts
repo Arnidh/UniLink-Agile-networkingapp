@@ -683,19 +683,15 @@ export const getAllProfiles = async (role?: string, limit: number = 50) => {
 // Department Statistics
 export const getDepartmentStatistics = async () => {
   try {
+    // Supabase JS client doesn't support GROUP BY directly
+    // Use raw SQL query instead
     const { data, error } = await supabase
-      .from('profiles')
-      .select('department, count')
-      .not('department', 'is', null)
-      .group('department');
+      .rpc('get_department_stats');
     
     if (error) throw error;
     
     // Convert to format suitable for charts
-    return data.map(item => ({
-      name: item.department,
-      value: item.count
-    }));
+    return data || [];
   } catch (error: any) {
     console.error('Error fetching department statistics:', error);
     toast.error('Error fetching statistics', {
@@ -708,19 +704,15 @@ export const getDepartmentStatistics = async () => {
 // University Statistics
 export const getUniversityStatistics = async () => {
   try {
+    // Supabase JS client doesn't support GROUP BY directly
+    // Use raw SQL query instead
     const { data, error } = await supabase
-      .from('profiles')
-      .select('university, count')
-      .not('university', 'is', null)
-      .group('university');
+      .rpc('get_university_stats');
     
     if (error) throw error;
     
     // Convert to format suitable for charts
-    return data.map(item => ({
-      name: item.university,
-      value: item.count
-    }));
+    return data || [];
   } catch (error: any) {
     console.error('Error fetching university statistics:', error);
     toast.error('Error fetching statistics', {
@@ -733,18 +725,15 @@ export const getUniversityStatistics = async () => {
 // Role Statistics
 export const getRoleStatistics = async () => {
   try {
+    // Supabase JS client doesn't support GROUP BY directly
+    // Use raw SQL query instead
     const { data, error } = await supabase
-      .from('profiles')
-      .select('role, count')
-      .group('role');
+      .rpc('get_role_stats');
     
     if (error) throw error;
     
     // Convert to format suitable for charts
-    return data.map(item => ({
-      name: item.role,
-      value: item.count
-    }));
+    return data || [];
   } catch (error: any) {
     console.error('Error fetching role statistics:', error);
     toast.error('Error fetching statistics', {

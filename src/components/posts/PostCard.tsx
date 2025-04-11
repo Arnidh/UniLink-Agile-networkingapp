@@ -22,9 +22,10 @@ interface PostCardProps {
   post: Post;
   onPostDeleted?: () => void;
   onPostUpdated?: (updatedPost: Post) => void;
+  readOnly?: boolean; // Add this new prop
 }
 
-const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostUpdated }) => {
+const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostUpdated, readOnly = false }) => {
   const { currentUser } = useAuth();
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -83,7 +84,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostUpdated 
             </div>
           </div>
           
-          {isOwnPost && (
+          {isOwnPost && !readOnly && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -131,7 +132,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostUpdated 
           </Button>
         </div>
         
-        {isCommentsOpen && (
+        {isCommentsOpen && !readOnly && (
           <div className="pt-3 border-t">
             <CommentSection postId={post.id} />
           </div>

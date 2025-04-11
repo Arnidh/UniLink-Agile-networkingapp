@@ -23,16 +23,15 @@ const queryClient = new QueryClient({
       retry: 1,
       refetchOnWindowFocus: false,
       staleTime: 1000 * 60 * 5, // 5 minutes
-      onError: (error: unknown) => {
-        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-        console.error('Query error:', errorMessage);
-      },
     },
     mutations: {
-      onError: (error: unknown) => {
-        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-        console.error('Mutation error:', errorMessage);
-      },
+      // Use meta.onError for error handling
+      meta: {
+        onError: (error: unknown) => {
+          const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+          console.error('Mutation error:', errorMessage);
+        }
+      }
     },
   },
 });
