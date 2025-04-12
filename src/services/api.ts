@@ -887,3 +887,38 @@ export const getUnreadMessagesCount = async () => {
     return 0;
   }
 };
+
+export const searchPosts = async (query: string): Promise<Post[]> => {
+  const { data: posts, error } = await supabase
+    .from('posts')
+    .select('*, profiles:user_id(*)')
+    .textSearch('content', query, {
+      type: 'websearch',
+      config: 'english'
+    });
+  
+  if (error) {
+    console.error("Error searching posts:", error);
+    return [];
+  }
+  
+  const postsWithCommentCounts = await Promise.all(
+    (posts || []).map(async (post) => {
+      const commentsCount = await getCommentsCount(post.id);
+      return { ...post, comments_count: commentsCount };
+    })
+  );
+  
+  return postsWithCommentCounts;
+};
+
+export const getCommentsCount = async (postId: string): Promise<number> => {
+  const { count, error } = await supabase
+    .from('comments')
+    .select('id', { count: 'exact', head: true })
+    .eq('post_id', postId);
+  
+  if (error) throw error;
+  
+  return count || 0;
+};

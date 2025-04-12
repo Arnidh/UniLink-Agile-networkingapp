@@ -17,6 +17,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import CommentSection from './CommentSection';
+import { toast } from 'sonner';
 
 interface PostCardProps {
   post: Post;
@@ -34,6 +35,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostUpdated,
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [isLikeLoading, setIsLikeLoading] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
   
   const isOwnPost = currentUser?.id === post.user_id;
   
@@ -50,6 +53,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostUpdated,
     
     checkLikeStatus();
   }, [post.id, currentUser]);
+  
+  // Generate share URL
+  useEffect(() => {
+    const baseUrl = window.location.origin;
+    setShareUrl(`${baseUrl}/post/${post.id}`);
+  }, [post.id]);
   
   const handleLikeToggle = async () => {
     if (!currentUser) return;
@@ -90,6 +99,22 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostUpdated,
       onPostUpdated(updatedPost);
       setIsEditing(false);
     }
+  };
+  
+  const handleShare = async () => {
+    setIsShareDialogOpen(true);
+  };
+  
+  const copyShareLink = () => {
+    navigator.clipboard.writeText(shareUrl)
+      .then(() => {
+        toast.success("Link copied to clipboard");
+        setIsShareDialogOpen(false);
+      })
+      .catch(error => {
+        console.error("Failed to copy link:", error);
+        toast.error("Failed to copy link");
+      });
   };
   
   const getInitials = (name: string) => {
@@ -167,7 +192,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostUpdated,
             <MessageSquare className="h-4 w-4" />
             <span>Comment {post.comments_count ? `(${post.comments_count})` : ''}</span>
           </Button>
-          <Button variant="ghost" size="sm" className="flex gap-1 items-center text-gray-600">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="flex gap-1 items-center text-gray-600"
+            onClick={handleShare}
+          >
             <Share className="h-4 w-4" />
             <span>Share</span>
           </Button>
@@ -209,6 +239,56 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostUpdated,
             <Button variant="outline" onClick={() => setIsDeleting(false)}>Cancel</Button>
             <Button variant="destructive" onClick={handleDelete}>Delete</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Share Dialog */}
+      <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Share Post</DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center gap-2">
+            <Input 
+              value={shareUrl}
+              readOnly 
+              className="flex-1"
+              onClick={(e) => (e.target as HTMLInputElement).select()}
+            />
+            <Button onClick={copyShareLink}>Copy</Button>
+          </div>
+          <div className="mt-4">
+            <h3 className="text-sm font-medium mb-2">Share on social media</h3>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => {
+                  window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}`, '_blank');
+                }}
+              >
+                Twitter
+              </Button>
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => {
+                  window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank');
+                }}
+              >
+                Facebook
+              </Button>
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => {
+                  window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, '_blank');
+                }}
+              >
+                LinkedIn
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </Card>

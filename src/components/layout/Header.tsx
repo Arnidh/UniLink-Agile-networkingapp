@@ -49,7 +49,10 @@ const Header = () => {
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Search for:', searchQuery);
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+      setSearchQuery('');
+    }
   };
   
   const handleSignOut = async () => {
@@ -70,13 +73,20 @@ const Header = () => {
       {currentUser && (
         <>
           <Link to="/dashboard">
-            <Button variant="ghost" className="hidden md:inline-flex">Dashboard</Button>
+            <Button variant="ghost" className={`hidden md:inline-flex ${location.pathname === '/dashboard' ? 'bg-gray-100' : ''}`}>
+              Dashboard
+            </Button>
           </Link>
           <Link to="/connections">
-            <Button variant="ghost" className="hidden md:inline-flex">Network</Button>
+            <Button variant="ghost" className={`hidden md:inline-flex ${location.pathname === '/connections' ? 'bg-gray-100' : ''}`}>
+              Network
+            </Button>
           </Link>
           <Link to="/messages" className="relative hidden md:block">
-            <Button variant="ghost" className="relative">
+            <Button 
+              variant="ghost" 
+              className={`relative ${location.pathname === '/messages' ? 'bg-gray-100' : ''}`}
+            >
               <MessageSquare className="h-5 w-5" />
               <span className="ml-2">Messages</span>
               {unreadMessagesCount > 0 && (
@@ -98,7 +108,7 @@ const Header = () => {
       <div className="p-4 border-b flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <img 
-            src="/lovable-uploads/c8b61bdd-a537-4d22-a772-d93ab3de15e0.png" 
+            src="/lovable-uploads/63a71ce9-c955-47d6-ad75-6d2698674e1b.png" 
             alt="UniLink Logo" 
             className="h-8 w-8" 
           />
@@ -115,13 +125,26 @@ const Header = () => {
         {currentUser ? (
           <>
             <Link to="/dashboard" className="block">
-              <Button variant="ghost" className="w-full justify-start">Dashboard</Button>
+              <Button 
+                variant="ghost" 
+                className={`w-full justify-start ${location.pathname === '/dashboard' ? 'bg-gray-100' : ''}`}
+              >
+                Dashboard
+              </Button>
             </Link>
             <Link to="/connections" className="block">
-              <Button variant="ghost" className="w-full justify-start">Network</Button>
+              <Button 
+                variant="ghost" 
+                className={`w-full justify-start ${location.pathname === '/connections' ? 'bg-gray-100' : ''}`}
+              >
+                Network
+              </Button>
             </Link>
             <Link to="/messages" className="block">
-              <Button variant="ghost" className="w-full justify-start flex items-center">
+              <Button 
+                variant="ghost" 
+                className={`w-full justify-start flex items-center ${location.pathname === '/messages' ? 'bg-gray-100' : ''}`}
+              >
                 <MessageSquare className="h-5 w-5 mr-2" />
                 Messages
                 {unreadMessagesCount > 0 && (
@@ -130,13 +153,19 @@ const Header = () => {
               </Button>
             </Link>
             <Link to="/profile" className="block">
-              <Button variant="ghost" className="w-full justify-start">
+              <Button 
+                variant="ghost" 
+                className={`w-full justify-start ${location.pathname === '/profile' ? 'bg-gray-100' : ''}`}
+              >
                 <User className="h-5 w-5 mr-2" />
                 Profile
               </Button>
             </Link>
             <Link to="/settings" className="block">
-              <Button variant="ghost" className="w-full justify-start">
+              <Button 
+                variant="ghost" 
+                className={`w-full justify-start ${location.pathname === '/settings' ? 'bg-gray-100' : ''}`}
+              >
                 <Settings className="h-5 w-5 mr-2" />
                 Settings
               </Button>
@@ -165,13 +194,13 @@ const Header = () => {
   );
   
   return (
-    <header className="sticky top-0 bg-white border-b z-10">
+    <header className="sticky top-0 bg-white border-b z-10 shadow-sm">
       <div className="container px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-4">
             <Link to="/" className="flex items-center gap-2">
               <img 
-                src="/lovable-uploads/c8b61bdd-a537-4d22-a772-d93ab3de15e0.png" 
+                src="/lovable-uploads/63a71ce9-c955-47d6-ad75-6d2698674e1b.png" 
                 alt="UniLink Logo" 
                 className="h-8 w-8" 
               />
@@ -197,8 +226,8 @@ const Header = () => {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                 <Input
                   type="search"
-                  placeholder="Search"
-                  className="pl-8 w-[200px]"
+                  placeholder="Search users or posts"
+                  className="pl-8 w-[220px]"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />

@@ -16,6 +16,8 @@ import Connections from "./pages/Connections";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Messages from "./pages/Messages";
+import Search from "./pages/Search";
+import Post from "./pages/Post";
 
 // Create a client with error handling
 const queryClient = new QueryClient({
@@ -54,6 +56,8 @@ const App = () => (
             <Route path="/connections" element={<Connections />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/messages" element={<Messages />} />
+            <Route path="/search" element={<Search />} />
+            <Route path="/post/:id" element={<Post />} />
             
             {/* Keep old role-specific routes for backward compatibility */}
             <Route path="/student-dashboard" element={<Dashboard />} />
