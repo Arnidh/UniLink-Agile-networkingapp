@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,26 +14,24 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, Menu, X, User, Settings, LogOut, Bell, MessageSquare } from 'lucide-react';
-import { useMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { getUnreadMessagesCount } from '@/services/api';
 
 const Header = () => {
   const { currentUser, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
   
   useEffect(() => {
-    // Close mobile menu when route changes
     setIsMenuOpen(false);
   }, [location.pathname]);
   
   useEffect(() => {
-    // Check for unread messages
     const checkUnreadMessages = async () => {
       if (currentUser) {
         const count = await getUnreadMessagesCount();
@@ -44,15 +41,13 @@ const Header = () => {
     
     checkUnreadMessages();
     
-    // Check periodically
-    const interval = setInterval(checkUnreadMessages, 30000); // Check every 30 seconds
+    const interval = setInterval(checkUnreadMessages, 30000);
     
     return () => clearInterval(interval);
   }, [currentUser]);
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Implement search functionality
     console.log('Search for:', searchQuery);
   };
   
