@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -111,7 +112,7 @@ const Header = () => {
             alt="UniLink Logo" 
             className="h-8 w-8" 
           />
-          <span className="text-xl font-bold bg-gradient-to-r from-unilink-primary to-unilink-secondary bg-clip-text text-transparent">
+          <span className="text-2xl font-bold text-[#5D5FEF]">
             UniLink
           </span>
         </Link>
@@ -203,7 +204,7 @@ const Header = () => {
                 alt="UniLink Logo" 
                 className="h-8 w-8" 
               />
-              <span className="text-xl font-bold bg-gradient-to-r from-unilink-primary to-unilink-secondary bg-clip-text text-transparent">
+              <span className="text-2xl font-bold text-[#5D5FEF]">
                 UniLink
               </span>
             </Link>

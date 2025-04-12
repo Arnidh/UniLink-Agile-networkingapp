@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/layout/Header";
@@ -11,13 +10,13 @@ const Index = () => {
       
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="py-20 px-4">
+        <section className="py-20 px-4 pt-24">
           <div className="container mx-auto max-w-5xl">
             <div className="grid md:grid-cols-2 gap-10 items-center">
               <div className="space-y-6">
                 <h1 className="text-4xl md:text-5xl font-bold leading-tight">
                   Connect, Collaborate, and Grow with{" "}
-                  <span className="bg-gradient-to-r from-unilink-primary to-unilink-secondary bg-clip-text text-transparent">
+                  <span className="text-[#5D5FEF]">
                     UniLink
                   </span>
                 </h1>
@@ -145,7 +144,7 @@ const Index = () => {
                 alt="UniLink Logo" 
                 className="h-8 w-8" 
               />
-              <span className="text-xl font-bold bg-gradient-to-r from-unilink-primary to-unilink-secondary bg-clip-text text-transparent">
+              <span className="text-2xl font-bold text-[#5D5FEF]">
                 UniLink
               </span>
             </div>
