@@ -4,6 +4,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input'; // Added missing import
 import { MessageSquare, ThumbsUp, Share, MoreVertical, Trash2, Edit } from 'lucide-react';
 import { Post, deletePost, likePost, unlikePost, hasUserLikedPost, getPostLikes } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
