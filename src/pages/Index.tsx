@@ -140,9 +140,11 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center gap-2 mb-4 md:mb-0">
-              <div className="h-8 w-8 rounded-md unilink-gradient flex items-center justify-center">
-                <span className="text-white font-bold text-sm">U</span>
-              </div>
+              <img 
+                src="/lovable-uploads/c8b61bdd-a537-4d22-a772-d93ab3de15e0.png" 
+                alt="UniLink Logo" 
+                className="h-8 w-8" 
+              />
               <span className="text-xl font-bold bg-gradient-to-r from-unilink-primary to-unilink-secondary bg-clip-text text-transparent">
                 UniLink
               </span>

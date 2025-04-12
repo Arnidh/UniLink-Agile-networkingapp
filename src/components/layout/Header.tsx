@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -96,9 +97,11 @@ const Header = () => {
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
       <div className="p-4 border-b flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-md unilink-gradient flex items-center justify-center">
-            <span className="text-white font-bold text-sm">U</span>
-          </div>
+          <img 
+            src="/lovable-uploads/c8b61bdd-a537-4d22-a772-d93ab3de15e0.png" 
+            alt="UniLink Logo" 
+            className="h-8 w-8" 
+          />
           <span className="text-xl font-bold bg-gradient-to-r from-unilink-primary to-unilink-secondary bg-clip-text text-transparent">
             UniLink
           </span>
@@ -167,9 +170,11 @@ const Header = () => {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-4">
             <Link to="/" className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-md unilink-gradient flex items-center justify-center">
-                <span className="text-white font-bold text-sm">U</span>
-              </div>
+              <img 
+                src="/lovable-uploads/c8b61bdd-a537-4d22-a772-d93ab3de15e0.png" 
+                alt="UniLink Logo" 
+                className="h-8 w-8" 
+              />
               <span className="text-xl font-bold bg-gradient-to-r from-unilink-primary to-unilink-secondary bg-clip-text text-transparent">
                 UniLink
               </span>
