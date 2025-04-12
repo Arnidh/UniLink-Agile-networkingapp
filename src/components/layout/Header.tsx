@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -194,7 +193,7 @@ const Header = () => {
   );
   
   return (
-    <header className="sticky top-0 bg-white border-b z-10 shadow-sm">
+    <header className="fixed top-0 left-0 right-0 bg-white border-b z-10 shadow-sm">
       <div className="container px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-4">
@@ -244,7 +243,7 @@ const Header = () => {
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-56 bg-white">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <Link to="/profile">
