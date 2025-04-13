@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/layout/Header";
 import { Card } from "@/components/ui/card";
@@ -8,15 +7,28 @@ import MessagesList, { Message } from "@/components/messaging/MessagesList";
 import MessageChat from "@/components/messaging/MessageChat";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getProfileById } from "@/services/api";
 
 const Messages = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
+  // Parse URL parameters to get any direct message recipient
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const userId = searchParams.get('userId');
+    if (userId) {
+      setSelectedUserId(userId);
+      // Clean up the URL
+      navigate('/messages', { replace: true });
+    }
+  }, [location, navigate]);
+
   // Redirect if not logged in
   useEffect(() => {
     if (!currentUser) {
@@ -95,6 +107,37 @@ const Messages = () => {
       supabase.removeChannel(channel);
     };
   }, [currentUser]);
+
+  // Try to initiate a new conversation if selectedUserId is set but not in our existing conversation list
+  useEffect(() => {
+    const checkNewConversation = async () => {
+      if (!selectedUserId || !currentUser) return;
+      
+      // Check if we already have a conversation with this user
+      const existingConversation = messages.some(msg => 
+        (msg.sender_id === currentUser.id && msg.recipient_id === selectedUserId) || 
+        (msg.recipient_id === currentUser.id && msg.sender_id === selectedUserId)
+      );
+      
+      // If not, we'll verify the user exists and prepare for a new conversation
+      if (!existingConversation) {
+        try {
+          const profileData = await getProfileById(selectedUserId);
+          if (!profileData) {
+            setSelectedUserId(null);
+            toast.error("User not found");
+          }
+          // We'll keep selectedUserId set so the chat interface opens
+        } catch (error) {
+          console.error('Error fetching profile:', error);
+          setSelectedUserId(null);
+          toast.error("Couldn't load user profile");
+        }
+      }
+    };
+    
+    checkNewConversation();
+  }, [selectedUserId, messages, currentUser]);
   
   const handleSelectMessage = (message: Message) => {
     const otherId = message.sender_id === currentUser?.id ? message.recipient_id : message.sender_id;

@@ -8,11 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserCheck, UserPlus, UserX, User, Book, Building, GraduationCap, Calendar } from "lucide-react";
+import { UserCheck, UserPlus, UserX, User, Book, Building, GraduationCap, Calendar, MessageCircle } from "lucide-react";
 import PostCard from "@/components/posts/PostCard";
 import ProfileStatistics from "@/components/profiles/ProfileStatistics";
 import { useQuery } from "@tanstack/react-query";
-import { Profile, getUserPosts, getProfileById, checkConnectionStatus, sendConnectionRequest } from "@/services/api";
+import { Profile, getUserPosts, getProfileById, checkConnectionStatus, sendConnectionRequest, sendMessage } from "@/services/api";
 import { toast } from "sonner";
 
 const UserProfile = () => {
@@ -80,6 +80,11 @@ const UserProfile = () => {
       console.error("Error sending connection request:", error);
       toast.error("Failed to send connection request");
     }
+  };
+
+  const handleMessage = () => {
+    if (!userId || !currentUser) return;
+    navigate(`/messages?userId=${userId}`);
   };
   
   const getInitials = (name: string) => {
@@ -186,8 +191,19 @@ const UserProfile = () => {
                     <h2 className="text-2xl font-bold">{profile?.name}</h2>
                     <Badge className="mt-2 capitalize">{profile?.role}</Badge>
                     
-                    <div className="mt-4 w-full">
+                    <div className="mt-4 space-y-2 w-full">
                       {getConnectionButtonContent()}
+                      
+                      {(connectionStatus === 'accepted' || !connectionStatus) && (
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={handleMessage}
+                        >
+                          <MessageCircle className="h-4 w-4 mr-2" />
+                          Message
+                        </Button>
+                      )}
                     </div>
                   </div>
                   

@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Connection, respondToConnectionRequest } from '@/services/api';
-import { Check, X, User } from 'lucide-react';
+import { Check, X, User, MessageCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -47,6 +47,12 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({ connection, isPending =
   const handleViewProfile = () => {
     if (isProfileDefined && connection.profile.id) {
       navigate(`/profile/${connection.profile.id}`);
+    }
+  };
+
+  const handleMessage = () => {
+    if (isProfileDefined && connection.profile.id) {
+      navigate(`/messages?userId=${connection.profile.id}`);
     }
   };
   
@@ -109,15 +115,27 @@ const ConnectionCard: React.FC<ConnectionCardProps> = ({ connection, isPending =
                 {connection.status === 'accepted' ? 'Connected' : 
                  connection.status === 'pending' ? 'Pending' : 'Rejected'}
               </span>
-              {isProfileDefined && connection.profile.id && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={handleViewProfile}
-                >
-                  View
-                </Button>
-              )}
+              <div className="flex gap-2">
+                {isProfileDefined && connection.profile.id && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={handleViewProfile}
+                  >
+                    View
+                  </Button>
+                )}
+                {connection.status === 'accepted' && isProfileDefined && connection.profile.id && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleMessage}
+                  >
+                    <MessageCircle className="h-4 w-4 mr-1" />
+                    Message
+                  </Button>
+                )}
+              </div>
             </div>
           )}
         </div>
