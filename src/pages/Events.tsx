@@ -21,11 +21,13 @@ interface Event {
   title: string;
   date: string;
   location: string;
-  description: string;
+  description: string | null;
   category: string;
+  organizer_id: string;
+  image_url?: string | null;
+  created_at: string;
+  updated_at: string;
   organizer?: string;
-  organizer_id?: string;
-  imageUrl?: string;
   saved?: boolean;
 }
 
@@ -63,8 +65,7 @@ const Events = () => {
           .select(`
             *,
             profiles:organizer_id(name)
-          `)
-          .order('date', { ascending: true });
+          `);
           
         if (eventsError) throw eventsError;
         
@@ -182,9 +183,9 @@ const Events = () => {
       if (error) throw error;
       
       // Add to events list
-      const newEventWithOrganizer = {
+      const newEventWithOrganizer: Event = {
         ...data,
-        organizer: currentUser.name || 'Me',
+        organizer: currentUser.user_metadata?.name || 'Me',
         saved: false
       };
       
@@ -232,7 +233,7 @@ const Events = () => {
 
   const filteredEvents = events.filter(event => {
     const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         event.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (event.description?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
                          event.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          (event.organizer && event.organizer.toLowerCase().includes(searchQuery.toLowerCase()));
     
@@ -311,9 +312,9 @@ const Events = () => {
                 {filteredEvents.length > 0 ? (
                   filteredEvents.map(event => (
                     <Card key={event.id} className="overflow-hidden transition-shadow hover:shadow-lg">
-                      {event.imageUrl && (
+                      {event.image_url && (
                         <div className="h-40 overflow-hidden">
-                          <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover" />
+                          <img src={event.image_url} alt={event.title} className="w-full h-full object-cover" />
                         </div>
                       )}
                       <CardHeader>
@@ -414,7 +415,12 @@ const Events = () => {
             ) : (
               <div className="text-center py-12 bg-white rounded-lg shadow">
                 <p className="text-gray-500 mb-4">You haven't saved any events yet.</p>
-                <Button variant="outline" onClick={() => document.querySelector('[data-value="upcoming"]')?.click()}>
+                <Button variant="outline" onClick={() => {
+                  const element = document.querySelector('[data-value="upcoming"]');
+                  if (element) {
+                    (element as HTMLElement).click();
+                  }
+                }}>
                   Explore Events
                 </Button>
               </div>
@@ -460,7 +466,12 @@ const Events = () => {
             ) : (
               <div className="text-center py-12 bg-white rounded-lg shadow">
                 <p className="text-gray-500 mb-4">No past events to display.</p>
-                <Button variant="outline" onClick={() => document.querySelector('[data-value="upcoming"]')?.click()}>
+                <Button variant="outline" onClick={() => {
+                  const element = document.querySelector('[data-value="upcoming"]');
+                  if (element) {
+                    (element as HTMLElement).click();
+                  }
+                }}>
                   View Upcoming Events
                 </Button>
               </div>

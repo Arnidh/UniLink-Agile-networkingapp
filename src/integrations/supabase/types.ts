@@ -93,6 +93,45 @@ export type Database = {
           },
         ]
       }
+      events: {
+        Row: {
+          category: string
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          image_url: string | null
+          location: string
+          organizer_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          date: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          location: string
+          organizer_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          location?: string
+          organizer_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       likes: {
         Row: {
           created_at: string
@@ -244,6 +283,35 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      saved_events: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_events_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
