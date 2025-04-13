@@ -7,59 +7,44 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Search, Menu, X, User, Settings, LogOut, Bell, MessageSquare } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { Menu, X, Home, User, Users, Mail, Settings, LogOut, MessageSquare, Calendar, Search } from 'lucide-react';
 import { getUnreadMessagesCount } from '@/services/api';
+import { Badge } from '@/components/ui/badge';
 
 const Header = () => {
   const { currentUser, profile, signOut } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const isMobile = useIsMobile();
-  
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
-  
+  const [unreadCount, setUnreadCount] = useState(0);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const isAuthenticated = !!currentUser;
+
   useEffect(() => {
-    setIsMenuOpen(false);
-  }, [location.pathname]);
-  
-  useEffect(() => {
-    const checkUnreadMessages = async () => {
+    const fetchUnreadCount = async () => {
       if (currentUser) {
         const count = await getUnreadMessagesCount();
-        setUnreadMessagesCount(count);
+        setUnreadCount(count);
       }
     };
+
+    fetchUnreadCount();
     
-    checkUnreadMessages();
-    
-    const interval = setInterval(checkUnreadMessages, 30000);
+    // Check for unread messages every minute
+    const interval = setInterval(fetchUnreadCount, 60000);
     
     return () => clearInterval(interval);
   }, [currentUser]);
-  
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-      setSearchQuery('');
-    }
-  };
-  
+
   const handleSignOut = async () => {
     await signOut();
     navigate('/signin');
   };
-  
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -67,140 +52,24 @@ const Header = () => {
       .join("")
       .toUpperCase();
   };
-  
-  const renderNavLinks = () => (
-    <>
-      {currentUser && (
-        <>
-          <Link to="/dashboard">
-            <Button variant="ghost" className={`hidden md:inline-flex ${location.pathname === '/dashboard' ? 'bg-gray-100' : ''}`}>
-              Dashboard
-            </Button>
-          </Link>
-          <Link to="/connections">
-            <Button variant="ghost" className={`hidden md:inline-flex ${location.pathname === '/connections' ? 'bg-gray-100' : ''}`}>
-              Network
-            </Button>
-          </Link>
-          <Link to="/messages" className="relative hidden md:block">
-            <Button 
-              variant="ghost" 
-              className={`relative ${location.pathname === '/messages' ? 'bg-gray-100' : ''}`}
-            >
-              <MessageSquare className="h-5 w-5" />
-              <span className="ml-2">Messages</span>
-              {unreadMessagesCount > 0 && (
-                <Badge 
-                  className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-red-500"
-                >
-                  {unreadMessagesCount}
-                </Badge>
-              )}
-            </Button>
-          </Link>
-        </>
-      )}
-    </>
-  );
-  
-  const renderMobileMenu = () => (
-    <div className="fixed inset-0 bg-white z-50 flex flex-col">
-      <div className="p-4 border-b flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
-          <img 
-            src="/lovable-uploads/63a71ce9-c955-47d6-ad75-6d2698674e1b.png" 
-            alt="UniLink Logo" 
-            className="h-8 w-8" 
-          />
-          <span className="text-2xl font-bold text-[#5D5FEF]">
-            UniLink
-          </span>
-        </Link>
-        <Button variant="ghost" size="icon" onClick={() => setIsMenuOpen(false)}>
-          <X className="h-6 w-6" />
-        </Button>
-      </div>
-      
-      <div className="flex-1 p-4 space-y-2">
-        {currentUser ? (
-          <>
-            <Link to="/dashboard" className="block">
-              <Button 
-                variant="ghost" 
-                className={`w-full justify-start ${location.pathname === '/dashboard' ? 'bg-gray-100' : ''}`}
-              >
-                Dashboard
-              </Button>
-            </Link>
-            <Link to="/connections" className="block">
-              <Button 
-                variant="ghost" 
-                className={`w-full justify-start ${location.pathname === '/connections' ? 'bg-gray-100' : ''}`}
-              >
-                Network
-              </Button>
-            </Link>
-            <Link to="/messages" className="block">
-              <Button 
-                variant="ghost" 
-                className={`w-full justify-start flex items-center ${location.pathname === '/messages' ? 'bg-gray-100' : ''}`}
-              >
-                <MessageSquare className="h-5 w-5 mr-2" />
-                Messages
-                {unreadMessagesCount > 0 && (
-                  <Badge className="ml-2 bg-red-500">{unreadMessagesCount}</Badge>
-                )}
-              </Button>
-            </Link>
-            <Link to="/profile" className="block">
-              <Button 
-                variant="ghost" 
-                className={`w-full justify-start ${location.pathname === '/profile' ? 'bg-gray-100' : ''}`}
-              >
-                <User className="h-5 w-5 mr-2" />
-                Profile
-              </Button>
-            </Link>
-            <Link to="/settings" className="block">
-              <Button 
-                variant="ghost" 
-                className={`w-full justify-start ${location.pathname === '/settings' ? 'bg-gray-100' : ''}`}
-              >
-                <Settings className="h-5 w-5 mr-2" />
-                Settings
-              </Button>
-            </Link>
-            <Button 
-              variant="ghost" 
-              className="w-full justify-start text-red-500 hover:text-red-700"
-              onClick={handleSignOut}
-            >
-              <LogOut className="h-5 w-5 mr-2" />
-              Sign Out
-            </Button>
-          </>
-        ) : (
-          <>
-            <Link to="/signin" className="block">
-              <Button variant="ghost" className="w-full justify-start">Sign In</Button>
-            </Link>
-            <Link to="/signup" className="block">
-              <Button className="w-full justify-start">Sign Up</Button>
-            </Link>
-          </>
-        )}
-      </div>
-    </div>
-  );
-  
+
+  const isActiveLink = (path: string) => {
+    return location.pathname === path;
+  };
+
+  useEffect(() => {
+    // Close mobile menu when navigating
+    setIsMenuOpen(false);
+  }, [location]);
+
   return (
-    <header className="fixed top-0 left-0 right-0 bg-white border-b z-10 shadow-sm">
-      <div className="container px-4">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center gap-4">
-            <Link to="/" className="flex items-center gap-2">
+    <header className="bg-white border-b border-gray-200 py-3 px-4 fixed top-0 left-0 right-0 z-50">
+      <div className="container mx-auto">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center">
+            <Link to="/" className="flex items-center">
               <img 
-                src="/lovable-uploads/63a71ce9-c955-47d6-ad75-6d2698674e1b.png" 
+                src="/lovable-uploads/c8b61bdd-a537-4d22-a772-d93ab3de15e0.png" 
                 alt="UniLink Logo" 
                 className="h-8 w-8" 
               />
@@ -209,76 +78,110 @@ const Header = () => {
               </span>
             </Link>
             
-            {isMobile ? (
-              <Button variant="ghost" size="icon" onClick={() => setIsMenuOpen(true)}>
-                <Menu className="h-6 w-6" />
-              </Button>
-            ) : (
-              <div className="ml-4">
-                {renderNavLinks()}
-              </div>
+            {isAuthenticated && (
+              <nav className="hidden md:flex items-center ml-8 space-x-6">
+                <Link 
+                  to="/dashboard" 
+                  className={`text-gray-600 hover:text-gray-900 font-medium ${
+                    isActiveLink("/dashboard") ? "text-unilink-primary" : ""
+                  }`}
+                >
+                  Dashboard
+                </Link>
+                <Link 
+                  to="/connections" 
+                  className={`text-gray-600 hover:text-gray-900 font-medium ${
+                    isActiveLink("/connections") ? "text-unilink-primary" : ""
+                  }`}
+                >
+                  Connections
+                </Link>
+                <Link 
+                  to="/events" 
+                  className={`text-gray-600 hover:text-gray-900 font-medium ${
+                    isActiveLink("/events") ? "text-unilink-primary" : ""
+                  }`}
+                >
+                  Events
+                </Link>
+                <Link 
+                  to="/messages" 
+                  className={`text-gray-600 hover:text-gray-900 font-medium relative ${
+                    isActiveLink("/messages") ? "text-unilink-primary" : ""
+                  }`}
+                >
+                  Messages
+                  {unreadCount > 0 && (
+                    <Badge className="absolute -top-2 -right-2 bg-red-500 px-1 h-5 min-w-5 flex justify-center items-center rounded-full">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </Badge>
+                  )}
+                </Link>
+              </nav>
             )}
           </div>
           
-          <div className="flex items-center gap-2">
-            <form onSubmit={handleSearch} className="hidden md:flex">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                <Input
-                  type="search"
-                  placeholder="Search users or posts"
-                  className="pl-8 w-[220px]"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </form>
-            
-            {currentUser && profile ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative rounded-full h-8 w-8 p-0">
+          <div className="flex items-center space-x-4">
+            {isAuthenticated ? (
+              <>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="hidden md:flex"
+                  onClick={() => navigate('/search')}
+                >
+                  <Search className="h-5 w-5" />
+                </Button>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild className="cursor-pointer">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={profile.profile_picture} alt={profile.name} />
-                      <AvatarFallback>{getInitials(profile.name)}</AvatarFallback>
+                      <AvatarImage src={profile?.profile_picture} />
+                      <AvatarFallback>{profile ? getInitials(profile.name) : "U"}</AvatarFallback>
                     </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-white">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <Link to="/profile">
-                    <DropdownMenuItem className="cursor-pointer">
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => navigate('/profile')}>
+                      <User className="mr-2 h-4 w-4" /> Profile
                     </DropdownMenuItem>
-                  </Link>
-                  <Link to="/messages" className="block md:hidden">
-                    <DropdownMenuItem className="cursor-pointer relative">
-                      <MessageSquare className="mr-2 h-4 w-4" />
-                      <span>Messages</span>
-                      {unreadMessagesCount > 0 && (
-                        <Badge className="ml-2 bg-red-500">{unreadMessagesCount}</Badge>
+                    <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+                      <Home className="mr-2 h-4 w-4" /> Dashboard
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/connections')}>
+                      <Users className="mr-2 h-4 w-4" /> Connections
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/messages')}>
+                      <Mail className="mr-2 h-4 w-4" /> Messages
+                      {unreadCount > 0 && (
+                        <Badge className="ml-auto bg-red-500 px-1.5">
+                          {unreadCount}
+                        </Badge>
                       )}
                     </DropdownMenuItem>
-                  </Link>
-                  <Link to="/settings">
-                    <DropdownMenuItem className="cursor-pointer">
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Settings</span>
+                    <DropdownMenuItem onClick={() => navigate('/events')}>
+                      <Calendar className="mr-2 h-4 w-4" /> Events
                     </DropdownMenuItem>
-                  </Link>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Sign Out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate('/settings')}>
+                      <Settings className="mr-2 h-4 w-4" /> Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleSignOut}>
+                      <LogOut className="mr-2 h-4 w-4" /> Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                
+                <button 
+                  className="md:hidden"
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                >
+                  {isMenuOpen ? <X /> : <Menu />}
+                </button>
+              </>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center space-x-2">
                 <Link to="/signin">
-                  <Button variant="ghost" className="hidden md:inline-flex">Sign In</Button>
+                  <Button variant="ghost">Sign In</Button>
                 </Link>
                 <Link to="/signup">
                   <Button>Sign Up</Button>
@@ -287,9 +190,83 @@ const Header = () => {
             )}
           </div>
         </div>
+        
+        {/* Mobile menu */}
+        {isMenuOpen && isAuthenticated && (
+          <div className="md:hidden mt-4 py-4 border-t">
+            <nav className="flex flex-col space-y-4">
+              <Link 
+                to="/dashboard" 
+                className="flex items-center text-gray-600 hover:text-gray-900"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Home className="mr-2 h-4 w-4" />
+                Dashboard
+              </Link>
+              <Link 
+                to="/profile" 
+                className="flex items-center text-gray-600 hover:text-gray-900"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <User className="mr-2 h-4 w-4" />
+                Profile
+              </Link>
+              <Link 
+                to="/connections" 
+                className="flex items-center text-gray-600 hover:text-gray-900"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Users className="mr-2 h-4 w-4" />
+                Connections
+              </Link>
+              <Link 
+                to="/messages" 
+                className="flex items-center text-gray-600 hover:text-gray-900"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Messages
+                {unreadCount > 0 && (
+                  <Badge className="ml-2 bg-red-500">
+                    {unreadCount}
+                  </Badge>
+                )}
+              </Link>
+              <Link 
+                to="/events" 
+                className="flex items-center text-gray-600 hover:text-gray-900"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Calendar className="mr-2 h-4 w-4" />
+                Events
+              </Link>
+              <Link 
+                to="/search" 
+                className="flex items-center text-gray-600 hover:text-gray-900"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Search className="mr-2 h-4 w-4" />
+                Search
+              </Link>
+              <Link 
+                to="/settings" 
+                className="flex items-center text-gray-600 hover:text-gray-900"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </Link>
+              <button 
+                className="flex items-center text-gray-600 hover:text-gray-900"
+                onClick={handleSignOut}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign Out
+              </button>
+            </nav>
+          </div>
+        )}
       </div>
-      
-      {isMenuOpen && renderMobileMenu()}
     </header>
   );
 };

@@ -6,7 +6,32 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertCircle } from 'lucide-react';
+
+const commonDepartments = [
+  'Computer Science',
+  'Business',
+  'Engineering',
+  'Liberal Arts',
+  'Medicine',
+  'Law',
+  'Education',
+  'Chemistry',
+  'Physics',
+  'Mathematics',
+  'Biology',
+  'Psychology',
+  'Economics',
+  'Sociology',
+  'Political Science',
+  'History',
+  'English',
+  'Communications',
+  'Art',
+  'Music'
+];
 
 const ProfileForm: React.FC = () => {
   const { profile, updateProfile } = useAuth();
@@ -20,7 +45,13 @@ const ProfileForm: React.FC = () => {
     graduation_year: ''
   });
   
+  const [errors, setErrors] = useState({
+    name: '',
+    department: ''
+  });
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [customDepartment, setCustomDepartment] = useState(false);
   
   useEffect(() => {
     if (profile) {
@@ -32,23 +63,53 @@ const ProfileForm: React.FC = () => {
         profile_picture: profile.profile_picture || '',
         graduation_year: profile.graduation_year ? String(profile.graduation_year) : ''
       });
+      
+      setCustomDepartment(!commonDepartments.includes(profile.department || ''));
     }
   }, [profile]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Clear validation errors as user types
+    if (name === 'name' || name === 'department') {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+  
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'department') {
+      setErrors(prev => ({ ...prev, department: '' }));
+    }
+  };
+  
+  const validate = () => {
+    const newErrors = {
+      name: '',
+      department: ''
+    };
+    let isValid = true;
+    
+    if (!formData.name.trim()) {
+      newErrors.name = 'Name is required';
+      isValid = false;
+    }
+    
+    if (!formData.department.trim()) {
+      newErrors.department = 'Department is required';
+      isValid = false;
+    }
+    
+    setErrors(newErrors);
+    return isValid;
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name.trim()) {
-      toast({
-        title: "Name required",
-        description: "Please provide your name.",
-        variant: "destructive"
-      });
+    if (!validate()) {
       return;
     }
     
@@ -64,6 +125,10 @@ const ProfileForm: React.FC = () => {
       };
       
       await updateProfile(updatedProfile);
+      toast.success('Profile updated successfully');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast.error('Failed to update profile');
     } finally {
       setIsSubmitting(false);
     }
@@ -78,14 +143,19 @@ const ProfileForm: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">Name *</Label>
               <Input
                 id="name"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                required
+                className={errors.name ? "border-red-500" : ""}
               />
+              {errors.name && (
+                <p className="text-xs text-red-500 flex items-center">
+                  <AlertCircle className="h-3 w-3 mr-1" /> {errors.name}
+                </p>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -111,14 +181,56 @@ const ProfileForm: React.FC = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="department">Department</Label>
-              <Input
-                id="department"
-                name="department"
-                value={formData.department}
-                onChange={handleChange}
-                placeholder="e.g. Computer Science"
-              />
+              <Label htmlFor="department">Department *</Label>
+              {customDepartment ? (
+                <div className="space-y-2">
+                  <Input
+                    id="department"
+                    name="department"
+                    value={formData.department}
+                    onChange={handleChange}
+                    placeholder="Enter your department"
+                    className={errors.department ? "border-red-500" : ""}
+                  />
+                  <Button 
+                    type="button" 
+                    variant="link" 
+                    className="p-0 h-auto text-sm"
+                    onClick={() => setCustomDepartment(false)}
+                  >
+                    Select from common departments
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Select 
+                    value={formData.department} 
+                    onValueChange={(value) => handleSelectChange('department', value)}
+                  >
+                    <SelectTrigger className={errors.department ? "border-red-500" : ""}>
+                      <SelectValue placeholder="Select your department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {commonDepartments.map(dept => (
+                        <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button 
+                    type="button" 
+                    variant="link" 
+                    className="p-0 h-auto text-sm"
+                    onClick={() => setCustomDepartment(true)}
+                  >
+                    Enter custom department
+                  </Button>
+                </div>
+              )}
+              {errors.department && (
+                <p className="text-xs text-red-500 flex items-center">
+                  <AlertCircle className="h-3 w-3 mr-1" /> {errors.department}
+                </p>
+              )}
             </div>
             
             <div className="space-y-2">

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/layout/Header';
@@ -12,7 +13,7 @@ import { Users, Link, Settings, Calendar, Bookmark, Network, Bell, Search, Brief
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import DepartmentStatistics from '@/components/stats/DepartmentStatistics';
 
 const Dashboard = () => {
   const { currentUser, profile, isLoading } = useAuth();
@@ -135,7 +136,7 @@ const Dashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 pt-16">
         <Header />
         <div className="container py-8 flex justify-center items-center">
           <p className="text-lg text-gray-500">Loading...</p>
@@ -145,7 +146,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-16">
       <Header />
       
       <main className="container py-8">
@@ -201,6 +202,22 @@ const Dashboard = () => {
                   <Button 
                     variant="ghost" 
                     className="w-full justify-start"
+                    onClick={() => navigate('/messages')}
+                  >
+                    <Link className="mr-2 h-4 w-4" />
+                    Messages
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start"
+                    onClick={() => navigate('/events')}
+                  >
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Events
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start"
                     onClick={() => navigate('/settings')}
                   >
                     <Settings className="mr-2 h-4 w-4" />
@@ -218,9 +235,10 @@ const Dashboard = () => {
               onValueChange={setActiveTab} 
               className="w-full mb-6"
             >
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="feed">Feed</TabsTrigger>
                 <TabsTrigger value="network">Network</TabsTrigger>
+                <TabsTrigger value="events">Events</TabsTrigger>
               </TabsList>
               
               <TabsContent value="feed" className="pt-4">
@@ -317,7 +335,9 @@ const Dashboard = () => {
                     </Button>
                   </CardFooter>
                 </Card>
-                
+              </TabsContent>
+              
+              <TabsContent value="events" className="pt-4">
                 <Card>
                   <CardHeader>
                     <CardTitle>Upcoming University Events</CardTitle>
@@ -430,39 +450,7 @@ const Dashboard = () => {
               )}
             </div>
             
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-md">Department Statistics</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Department</TableHead>
-                      <TableHead className="text-right">Members</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell>Computer Science</TableCell>
-                      <TableCell className="text-right">245</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Business</TableCell>
-                      <TableCell className="text-right">189</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Engineering</TableCell>
-                      <TableCell className="text-right">156</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Liberal Arts</TableCell>
-                      <TableCell className="text-right">132</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+            <DepartmentStatistics />
           </div>
         </div>
       </main>

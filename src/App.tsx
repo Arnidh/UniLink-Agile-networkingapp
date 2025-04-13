@@ -1,76 +1,46 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import SignIn from "@/pages/SignIn";
+import SignUp from "@/pages/SignUp";
+import Dashboard from "@/pages/Dashboard";
+import Index from "@/pages/Index";
+import Profile from "@/pages/Profile";
+import UserProfile from "@/pages/UserProfile";
+import Connections from "@/pages/Connections";
+import Post from "@/pages/Post";
+import Settings from "@/pages/Settings";
+import Messages from "@/pages/Messages";
+import Search from "@/pages/Search";
+import NotFound from "@/pages/NotFound";
+import { Toaster } from 'sonner';
+import Events from "@/pages/Events";
 
-// Pages
-import Index from "./pages/Index";
-import SignIn from "./pages/SignIn";
-import SignUp from "./pages/SignUp";
-import Dashboard from "./pages/Dashboard";
-import Profile from "./pages/Profile";
-import UserProfile from "./pages/UserProfile";
-import Connections from "./pages/Connections";
-import Settings from "./pages/Settings";
-import NotFound from "./pages/NotFound";
-import Messages from "./pages/Messages";
-import Search from "./pages/Search";
-import Post from "./pages/Post";
+import "./App.css";
 
-// Create a client with error handling
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-      staleTime: 1000 * 60 * 5, // 5 minutes
-    },
-    mutations: {
-      // Updated error handling approach
-      meta: {
-        onError: (error: unknown) => {
-          const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-          console.error('Mutation error:', errorMessage);
-        }
-      }
-    },
-  },
-});
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <BrowserRouter>
-        <AuthProvider>
-          <Toaster />
-          <Sonner />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/signin" element={<SignIn />} />
-            <Route path="/signup" element={<SignUp />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/profile/:id" element={<UserProfile />} />
-            <Route path="/connections" element={<Connections />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/messages" element={<Messages />} />
-            <Route path="/search" element={<Search />} />
-            <Route path="/post/:id" element={<Post />} />
-            
-            {/* Keep old role-specific routes for backward compatibility */}
-            <Route path="/student-dashboard" element={<Dashboard />} />
-            <Route path="/professor-dashboard" element={<Dashboard />} />
-            <Route path="/alumni-dashboard" element={<Dashboard />} />
-            
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+function App() {
+  return (
+    <Router>
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/signin" element={<SignIn />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/:userId" element={<UserProfile />} />
+          <Route path="/connections" element={<Connections />} />
+          <Route path="/post/:postId" element={<Post />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/messages" element={<Messages />} />
+          <Route path="/events" element={<Events />} />
+          <Route path="/search" element={<Search />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <Toaster position="top-center" />
+      </AuthProvider>
+    </Router>
+  );
+}
 
 export default App;

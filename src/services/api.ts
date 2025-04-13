@@ -868,6 +868,27 @@ export const markMessageAsRead = async (messageId: string) => {
   }
 };
 
+export const markAllMessagesAsRead = async (senderId: string) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const { error } = await supabase
+      .from('messages')
+      .update({ read: true })
+      .eq('sender_id', senderId)
+      .eq('recipient_id', user.id)
+      .eq('read', false);
+    
+    if (error) throw error;
+    
+    return true;
+  } catch (error: any) {
+    console.error('Error marking messages as read:', error);
+    return false;
+  }
+};
+
 export const getUnreadMessagesCount = async () => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
