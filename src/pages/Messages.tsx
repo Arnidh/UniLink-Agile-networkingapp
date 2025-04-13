@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -62,6 +63,8 @@ const Messages = () => {
     loadMessages();
     
     // Subscribe to new messages
+    if (!currentUser) return;
+    
     const channel = supabase
       .channel('public:messages')
       .on(
@@ -106,7 +109,7 @@ const Messages = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentUser]);
+  }, [currentUser, navigate]);
 
   // Try to initiate a new conversation if selectedUserId is set but not in our existing conversation list
   useEffect(() => {

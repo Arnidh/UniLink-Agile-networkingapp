@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, ArrowLeft, Send } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { getProfileById } from "@/services/api";
+import { getProfileById, sendMessage } from "@/services/api";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Message {
@@ -86,9 +86,14 @@ const MessageChat: React.FC<MessageChatProps> = ({
     if (!newMessage.trim()) return;
     
     setIsSending(true);
-    await onSendMessage(newMessage.trim());
-    setNewMessage("");
-    setIsSending(false);
+    try {
+      await sendMessage(otherUserId, newMessage.trim());
+      setNewMessage("");
+    } catch (error) {
+      console.error("Error sending message:", error);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

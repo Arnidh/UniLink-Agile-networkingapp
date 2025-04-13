@@ -1,13 +1,20 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/layout/Header';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Search, Bell, Bookmark, MapPin, Clock, Filter } from 'lucide-react';
+import { Calendar, Search, PlusCircle, MapPin, Clock, Filter } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectItem, Select } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { format } from 'date-fns';
 
 interface Event {
   id: string;
@@ -17,97 +24,193 @@ interface Event {
   description: string;
   category: string;
   organizer?: string;
+  organizer_id?: string;
   imageUrl?: string;
+  saved?: boolean;
 }
 
 const Events = () => {
+  const { currentUser } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [events, setEvents] = useState<Event[]>([]);
+  const [savedEvents, setSavedEvents] = useState<string[]>([]);
+  const [pastEvents, setPastEvents] = useState<Event[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [openCreateDialog, setOpenCreateDialog] = useState(false);
+  
+  // New event form state
+  const [newEvent, setNewEvent] = useState({
+    title: '',
+    date: '',
+    time: '',
+    location: '',
+    description: '',
+    category: 'academic'
+  });
 
-  const universityEvents: Event[] = [
-    {
-      id: '1',
-      title: 'Fall Career Fair',
-      date: '2023-10-15T14:00:00',
-      location: 'University Main Hall',
-      description: 'Connect with over 50 employers from various industries.',
-      category: 'career',
-      organizer: 'Career Services Center'
-    },
-    {
-      id: '2',
-      title: 'Guest Lecture: AI in Healthcare',
-      date: '2023-10-18T15:30:00',
-      location: 'Science Building, Room 302',
-      description: 'Dr. Sarah Chen discusses the latest advancements in AI applications for healthcare.',
-      category: 'academic',
-      organizer: 'Computer Science Department'
-    },
-    {
-      id: '3',
-      title: 'Student Government Elections',
-      date: '2023-10-20T09:00:00',
-      location: 'Online',
-      description: 'Cast your vote for the student government representatives.',
-      category: 'campus',
-      organizer: 'Student Affairs Office'
-    },
-    {
-      id: '4',
-      title: 'Alumni Networking Night',
-      date: '2023-10-25T18:00:00',
-      location: 'University Center, Grand Hall',
-      description: 'Connect with alumni from various industries and build your professional network.',
-      category: 'networking',
-      organizer: 'Alumni Association'
-    },
-    {
-      id: '5',
-      title: 'Engineering Showcase',
-      date: '2023-11-05T10:00:00',
-      location: 'Engineering Building, Exhibition Hall',
-      description: 'Students present their innovative engineering projects to the community.',
-      category: 'academic',
-      organizer: 'Engineering Department'
-    },
-    {
-      id: '6',
-      title: 'Campus Sustainability Fair',
-      date: '2023-11-10T12:00:00',
-      location: 'University Quad',
-      description: 'Learn about sustainable initiatives and how you can contribute to a greener campus.',
-      category: 'campus',
-      organizer: 'Sustainability Office'
-    },
-    {
-      id: '7',
-      title: 'Business Plan Competition',
-      date: '2023-11-15T09:00:00',
-      location: 'Business School Auditorium',
-      description: 'Student entrepreneurs pitch their business ideas to a panel of judges for a chance to win funding.',
-      category: 'career',
-      organizer: 'Business School'
-    },
-    {
-      id: '8',
-      title: 'University Sports Day',
-      date: '2023-11-20T08:00:00',
-      location: 'University Sports Complex',
-      description: 'A day of friendly competition between departments in various sports.',
-      category: 'social',
-      organizer: 'Athletics Department'
+  // Load events from Supabase
+  useEffect(() => {
+    const loadEvents = async () => {
+      if (!currentUser) return;
+      
+      setIsLoading(true);
+      
+      try {
+        // Fetch all events
+        const { data: eventsData, error: eventsError } = await supabase
+          .from('events')
+          .select(`
+            *,
+            profiles:organizer_id(name)
+          `)
+          .order('date', { ascending: true });
+          
+        if (eventsError) throw eventsError;
+        
+        // Fetch user's saved events
+        const { data: savedData, error: savedError } = await supabase
+          .from('saved_events')
+          .select('event_id')
+          .eq('user_id', currentUser.id);
+          
+        if (savedError) throw savedError;
+        
+        // Transform data
+        const now = new Date();
+        const upcoming: Event[] = [];
+        const past: Event[] = [];
+        
+        const savedEventIds = savedData?.map(item => item.event_id) || [];
+        
+        eventsData?.forEach(event => {
+          const eventDate = new Date(event.date);
+          const formattedEvent = {
+            ...event,
+            organizer: event.profiles?.name || 'Unknown',
+            saved: savedEventIds.includes(event.id)
+          };
+          
+          if (eventDate >= now) {
+            upcoming.push(formattedEvent);
+          } else {
+            past.push(formattedEvent);
+          }
+        });
+        
+        setEvents(upcoming);
+        setPastEvents(past);
+        setSavedEvents(savedEventIds);
+      } catch (error) {
+        console.error('Error loading events:', error);
+        toast.error('Failed to load events');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadEvents();
+  }, [currentUser]);
+  
+  const handleSaveEvent = async (eventId: string, isSaved: boolean) => {
+    if (!currentUser) return;
+    
+    try {
+      if (isSaved) {
+        // Remove from saved
+        await supabase
+          .from('saved_events')
+          .delete()
+          .eq('user_id', currentUser.id)
+          .eq('event_id', eventId);
+          
+        setSavedEvents(prev => prev.filter(id => id !== eventId));
+        setEvents(prev => prev.map(event => 
+          event.id === eventId ? {...event, saved: false} : event
+        ));
+        toast.success('Event removed from saved');
+      } else {
+        // Add to saved
+        await supabase
+          .from('saved_events')
+          .insert({
+            user_id: currentUser.id,
+            event_id: eventId
+          });
+          
+        setSavedEvents(prev => [...prev, eventId]);
+        setEvents(prev => prev.map(event => 
+          event.id === eventId ? {...event, saved: true} : event
+        ));
+        toast.success('Event saved');
+      }
+    } catch (error) {
+      console.error('Error updating saved event:', error);
+      toast.error('Failed to update saved events');
     }
-  ];
+  };
+
+  const handleCreateEvent = async () => {
+    if (!currentUser) return;
+    
+    try {
+      // Validate required fields
+      if (!newEvent.title || !newEvent.date || !newEvent.location || !newEvent.category) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+      
+      // Combine date and time
+      const dateTime = newEvent.time 
+        ? `${newEvent.date}T${newEvent.time}`
+        : `${newEvent.date}T00:00:00`;
+        
+      // Insert new event
+      const { data, error } = await supabase
+        .from('events')
+        .insert({
+          title: newEvent.title,
+          date: dateTime,
+          location: newEvent.location,
+          description: newEvent.description,
+          category: newEvent.category,
+          organizer_id: currentUser.id
+        })
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      // Add to events list
+      const newEventWithOrganizer = {
+        ...data,
+        organizer: currentUser.name || 'Me',
+        saved: false
+      };
+      
+      setEvents(prev => [newEventWithOrganizer, ...prev]);
+      
+      // Reset form and close dialog
+      setNewEvent({
+        title: '',
+        date: '',
+        time: '',
+        location: '',
+        description: '',
+        category: 'academic'
+      });
+      setOpenCreateDialog(false);
+      
+      toast.success('Event created successfully');
+    } catch (error) {
+      console.error('Error creating event:', error);
+      toast.error('Failed to create event');
+    }
+  };
 
   const formatEventDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return format(date, 'MMM d, yyyy h:mm a');
   };
 
   const getEventCategoryBadge = (category: string) => {
@@ -127,9 +230,9 @@ const Events = () => {
     }
   };
 
-  const filteredEvents = universityEvents.filter(event => {
+  const filteredEvents = events.filter(event => {
     const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         event.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         event.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          event.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          (event.organizer && event.organizer.toLowerCase().includes(searchQuery.toLowerCase()));
     
@@ -137,13 +240,21 @@ const Events = () => {
     
     return matchesSearch && matchesCategory;
   });
+  
+  const filteredSavedEvents = events.filter(event => event.saved);
 
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
       <Header />
       
       <main className="container py-8">
-        <h1 className="text-3xl font-bold mb-6">University Events</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold">University Events</h1>
+          <Button onClick={() => setOpenCreateDialog(true)}>
+            <PlusCircle className="h-4 w-4 mr-2" />
+            Create Event
+          </Button>
+        </div>
         
         <div className="mb-8">
           <Card>
@@ -191,15 +302,134 @@ const Events = () => {
           </TabsList>
           
           <TabsContent value="upcoming">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredEvents.length > 0 ? (
-                filteredEvents.map(event => (
+            {isLoading ? (
+              <div className="text-center py-12 bg-white rounded-lg shadow">
+                <p className="text-gray-500">Loading events...</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredEvents.length > 0 ? (
+                  filteredEvents.map(event => (
+                    <Card key={event.id} className="overflow-hidden transition-shadow hover:shadow-lg">
+                      {event.imageUrl && (
+                        <div className="h-40 overflow-hidden">
+                          <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                      <CardHeader>
+                        <div className="flex justify-between items-start">
+                          <CardTitle className="text-lg">{event.title}</CardTitle>
+                          {getEventCategoryBadge(event.category)}
+                        </div>
+                        {event.organizer && (
+                          <CardDescription>Organized by: {event.organizer}</CardDescription>
+                        )}
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex items-center text-sm text-gray-500">
+                          <Calendar className="h-4 w-4 mr-2 flex-shrink-0" />
+                          {formatEventDate(event.date)}
+                        </div>
+                        
+                        <div className="flex items-center text-sm text-gray-500">
+                          <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
+                          {event.location}
+                        </div>
+                        
+                        <p className="text-sm">{event.description}</p>
+                      </CardContent>
+                      <CardFooter className="flex space-x-2 pt-2">
+                        <Button size="sm" variant="outline" className="flex-1">
+                          <Calendar className="h-4 w-4 mr-1" />
+                          Add to Calendar
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant={event.saved ? "default" : "outline"} 
+                          className={event.saved ? "flex-1 bg-blue-500 hover:bg-blue-600" : "flex-1"}
+                          onClick={() => handleSaveEvent(event.id, !!event.saved)}
+                        >
+                          {event.saved ? "Saved" : "Save"}
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="col-span-full text-center py-12 bg-white rounded-lg shadow">
+                    <p className="text-gray-500">No events found matching your criteria.</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="saved">
+            {isLoading ? (
+              <div className="text-center py-12 bg-white rounded-lg shadow">
+                <p className="text-gray-500">Loading saved events...</p>
+              </div>
+            ) : filteredSavedEvents.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredSavedEvents.map(event => (
                   <Card key={event.id} className="overflow-hidden transition-shadow hover:shadow-lg">
-                    {event.imageUrl && (
-                      <div className="h-40 overflow-hidden">
-                        <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover" />
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <CardTitle className="text-lg">{event.title}</CardTitle>
+                        {getEventCategoryBadge(event.category)}
                       </div>
-                    )}
+                      {event.organizer && (
+                        <CardDescription>Organized by: {event.organizer}</CardDescription>
+                      )}
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex items-center text-sm text-gray-500">
+                        <Calendar className="h-4 w-4 mr-2 flex-shrink-0" />
+                        {formatEventDate(event.date)}
+                      </div>
+                      
+                      <div className="flex items-center text-sm text-gray-500">
+                        <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
+                        {event.location}
+                      </div>
+                      
+                      <p className="text-sm">{event.description}</p>
+                    </CardContent>
+                    <CardFooter className="flex space-x-2 pt-2">
+                      <Button size="sm" variant="outline" className="flex-1">
+                        <Calendar className="h-4 w-4 mr-1" />
+                        Add to Calendar
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="default"
+                        className="flex-1 bg-red-500 hover:bg-red-600"
+                        onClick={() => handleSaveEvent(event.id, true)}
+                      >
+                        Unsave
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-white rounded-lg shadow">
+                <p className="text-gray-500 mb-4">You haven't saved any events yet.</p>
+                <Button variant="outline" onClick={() => document.querySelector('[data-value="upcoming"]')?.click()}>
+                  Explore Events
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="past">
+            {isLoading ? (
+              <div className="text-center py-12 bg-white rounded-lg shadow">
+                <p className="text-gray-500">Loading past events...</p>
+              </div>
+            ) : pastEvents.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {pastEvents.map(event => (
+                  <Card key={event.id} className="overflow-hidden transition-shadow hover:shadow-lg opacity-75">
                     <CardHeader>
                       <div className="flex justify-between items-start">
                         <CardTitle className="text-lg">{event.title}</CardTitle>
@@ -222,46 +452,120 @@ const Events = () => {
                       
                       <p className="text-sm">{event.description}</p>
                       
-                      <div className="flex space-x-2 pt-2">
-                        <Button size="sm" variant="outline" className="flex-1">
-                          <Calendar className="h-4 w-4 mr-1" />
-                          Add to Calendar
-                        </Button>
-                        <Button size="sm" variant="outline" className="flex-1">
-                          <Bookmark className="h-4 w-4 mr-1" />
-                          Save
-                        </Button>
-                      </div>
+                      <Badge variant="outline" className="bg-gray-200">Event Ended</Badge>
                     </CardContent>
                   </Card>
-                ))
-              ) : (
-                <div className="col-span-full text-center py-12 bg-white rounded-lg shadow">
-                  <p className="text-gray-500">No events found matching your criteria.</p>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="saved">
-            <div className="text-center py-12 bg-white rounded-lg shadow">
-              <p className="text-gray-500 mb-4">You haven't saved any events yet.</p>
-              <Button variant="outline">
-                Explore Events
-              </Button>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="past">
-            <div className="text-center py-12 bg-white rounded-lg shadow">
-              <p className="text-gray-500 mb-4">No past events to display.</p>
-              <Button variant="outline">
-                View Upcoming Events
-              </Button>
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-white rounded-lg shadow">
+                <p className="text-gray-500 mb-4">No past events to display.</p>
+                <Button variant="outline" onClick={() => document.querySelector('[data-value="upcoming"]')?.click()}>
+                  View Upcoming Events
+                </Button>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </main>
+      
+      {/* Create Event Dialog */}
+      <Dialog open={openCreateDialog} onOpenChange={setOpenCreateDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Create New Event</DialogTitle>
+            <DialogDescription>
+              Fill out the form below to create a new event. All fields marked with * are required.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="event-title" className="text-right">
+                Title *
+              </Label>
+              <Input
+                id="event-title"
+                value={newEvent.title}
+                onChange={(e) => setNewEvent({...newEvent, title: e.target.value})}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="event-date" className="text-right">
+                Date *
+              </Label>
+              <div className="col-span-3">
+                <Input
+                  id="event-date"
+                  type="date"
+                  value={newEvent.date}
+                  onChange={(e) => setNewEvent({...newEvent, date: e.target.value})}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="event-time" className="text-right">
+                Time
+              </Label>
+              <div className="col-span-3">
+                <Input
+                  id="event-time"
+                  type="time"
+                  value={newEvent.time}
+                  onChange={(e) => setNewEvent({...newEvent, time: e.target.value})}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="event-location" className="text-right">
+                Location *
+              </Label>
+              <Input
+                id="event-location"
+                value={newEvent.location}
+                onChange={(e) => setNewEvent({...newEvent, location: e.target.value})}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="event-category" className="text-right">
+                Category *
+              </Label>
+              <Select
+                value={newEvent.category}
+                onValueChange={(value) => setNewEvent({...newEvent, category: value})}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="academic">Academic</SelectItem>
+                  <SelectItem value="career">Career</SelectItem>
+                  <SelectItem value="campus">Campus</SelectItem>
+                  <SelectItem value="networking">Networking</SelectItem>
+                  <SelectItem value="social">Social</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="event-description" className="text-right">
+                Description
+              </Label>
+              <Textarea
+                id="event-description"
+                value={newEvent.description}
+                onChange={(e) => setNewEvent({...newEvent, description: e.target.value})}
+                className="col-span-3"
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenCreateDialog(false)}>Cancel</Button>
+            <Button type="submit" onClick={handleCreateEvent}>Create Event</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
