@@ -14,6 +14,7 @@ import ProfileStatistics from "@/components/profiles/ProfileStatistics";
 import PostCard from "@/components/posts/PostCard";
 import { useQuery } from "@tanstack/react-query";
 import { getUserPosts } from "@/services/api";
+import { toast } from "sonner";
 
 const Profile = () => {
   const { currentUser, profile } = useAuth();
@@ -34,7 +35,16 @@ const Profile = () => {
   };
 
   if (!currentUser || !profile) {
-    return null; // or a loading spinner/skeleton
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 py-8">
+          <div className="container px-4 text-center">
+            <p>Loading profile...</p>
+          </div>
+        </main>
+      </div>
+    );
   }
 
   return (
@@ -131,8 +141,14 @@ const Profile = () => {
                         <PostCard 
                           key={post.id} 
                           post={post} 
-                          onPostDeleted={() => refetchPosts()}
-                          onPostUpdated={() => refetchPosts()}
+                          onPostDeleted={() => {
+                            refetchPosts();
+                            toast.success("Post deleted successfully");
+                          }}
+                          onPostUpdated={() => {
+                            refetchPosts();
+                            toast.success("Post updated successfully");
+                          }}
                         />
                       ))}
                     </div>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,9 +13,10 @@ import PostCard from "@/components/posts/PostCard";
 import ProfileStatistics from "@/components/profiles/ProfileStatistics";
 import { useQuery } from "@tanstack/react-query";
 import { Profile, getUserPosts, getProfileById, checkConnectionStatus, sendConnectionRequest } from "@/services/api";
+import { toast } from "sonner";
 
 const UserProfile = () => {
-  const { id } = useParams<{ id: string }>();
+  const { userId } = useParams<{ userId: string }>();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -22,49 +24,61 @@ const UserProfile = () => {
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    if (!id) {
+    if (!userId) {
       navigate("/dashboard");
       return;
     }
     
-    if (currentUser?.id === id) {
+    if (currentUser?.id === userId) {
       navigate("/profile");
       return;
     }
     
     const fetchProfileData = async () => {
       setIsLoading(true);
-      const profileData = await getProfileById(id);
-      
-      if (profileData) {
-        setProfile(profileData);
+      try {
+        const profileData = await getProfileById(userId);
         
-        if (currentUser) {
-          const status = await checkConnectionStatus(currentUser.id, id);
-          setConnectionStatus(status);
+        if (profileData) {
+          setProfile(profileData);
+          
+          if (currentUser) {
+            const status = await checkConnectionStatus(currentUser.id, userId);
+            setConnectionStatus(status);
+          }
+        } else {
+          toast.error("Profile not found");
+          navigate("/dashboard");
         }
-      } else {
-        navigate("/dashboard");
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+        toast.error("Failed to load profile");
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     };
     
     fetchProfileData();
-  }, [id, currentUser, navigate]);
+  }, [userId, currentUser, navigate]);
   
   const { data: userPosts = [] } = useQuery({
-    queryKey: ['userPosts', id],
-    queryFn: () => id ? getUserPosts(id) : Promise.resolve([]),
-    enabled: !!id,
+    queryKey: ['userPosts', userId],
+    queryFn: () => userId ? getUserPosts(userId) : Promise.resolve([]),
+    enabled: !!userId,
   });
   
   const handleConnect = async () => {
-    if (!id || !currentUser) return;
+    if (!userId || !currentUser) return;
     
-    const connection = await sendConnectionRequest(id);
-    if (connection) {
-      setConnectionStatus('pending');
+    try {
+      const connection = await sendConnectionRequest(userId);
+      if (connection) {
+        setConnectionStatus('pending');
+        toast.success("Connection request sent");
+      }
+    } catch (error) {
+      console.error("Error sending connection request:", error);
+      toast.error("Failed to send connection request");
     }
   };
   
