@@ -213,6 +213,38 @@ export type Database = {
           },
         ]
       }
+      post_attachments: {
+        Row: {
+          created_at: string
+          file_path: string
+          file_type: string
+          id: string
+          post_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_path: string
+          file_type: string
+          id?: string
+          post_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_path?: string
+          file_type?: string
+          id?: string
+          post_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_attachments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       posts: {
         Row: {
           content: string

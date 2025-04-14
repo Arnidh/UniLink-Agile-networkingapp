@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Input } from '@/components/ui/input'; // Added missing import
+import { Input } from '@/components/ui/input';
 import { MessageSquare, ThumbsUp, Share, MoreVertical, Trash2, Edit } from 'lucide-react';
 import { Post, deletePost, likePost, unlikePost, hasUserLikedPost, getPostLikes } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,6 +18,27 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import CommentSection from './CommentSection';
 import { toast } from 'sonner';
+
+interface PostAttachment {
+  id: string;
+  file_path: string;
+  file_type: 'image' | 'video';
+  created_at: string;
+}
+
+export interface Post {
+  id: string;
+  user_id: string;
+  profile: {
+    id: string;
+    name: string;
+    profile_picture: string;
+  };
+  content: string;
+  created_at: string;
+  comments_count: number;
+  attachments?: PostAttachment[];
+}
 
 interface PostCardProps {
   post: Post;
@@ -55,7 +75,6 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostUpdated,
     checkLikeStatus();
   }, [post.id, currentUser]);
   
-  // Generate share URL
   useEffect(() => {
     const baseUrl = window.location.origin;
     setShareUrl(`${baseUrl}/post/${post.id}`);
@@ -169,6 +188,28 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostUpdated,
         
         <div className="my-3">
           <p className="text-md whitespace-pre-wrap">{post.content}</p>
+          
+          {post.attachments && post.attachments.length > 0 && (
+            <div className="grid grid-cols-2 gap-2 mt-3">
+              {post.attachments.map((attachment) => (
+                <div key={attachment.id} className="relative">
+                  {attachment.file_type === 'image' ? (
+                    <img
+                      src={`https://rnmidonrlotdhlimfgmo.supabase.co/storage/v1/object/public/post-attachments/${attachment.file_path}`}
+                      alt="Post attachment"
+                      className="w-full rounded-md"
+                    />
+                  ) : (
+                    <video
+                      src={`https://rnmidonrlotdhlimfgmo.supabase.co/storage/v1/object/public/post-attachments/${attachment.file_path}`}
+                      controls
+                      className="w-full rounded-md"
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </CardContent>
       
@@ -211,7 +252,6 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostUpdated,
         )}
       </CardFooter>
       
-      {/* Edit Post Dialog */}
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
         <DialogContent>
           <DialogHeader>
@@ -229,7 +269,6 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostUpdated,
         </DialogContent>
       </Dialog>
       
-      {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleting} onOpenChange={setIsDeleting}>
         <DialogContent>
           <DialogHeader>
@@ -243,7 +282,6 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostDeleted, onPostUpdated,
         </DialogContent>
       </Dialog>
       
-      {/* Share Dialog */}
       <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
         <DialogContent>
           <DialogHeader>

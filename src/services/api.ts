@@ -29,6 +29,12 @@ export interface Post {
   updated_at: string;
   profile?: Profile;
   comments_count?: number;
+  attachments?: {
+    id: string;
+    file_path: string;
+    file_type: 'image' | 'video';
+    created_at: string;
+  }[];
 }
 
 export interface Comment {
@@ -161,7 +167,8 @@ export const getPosts = async () => {
       .from('posts')
       .select(`
         *,
-        profile:profiles(*)
+        profile:profiles(*),
+        attachments:post_attachments(*)
       `)
       .order('created_at', { ascending: false });
     
