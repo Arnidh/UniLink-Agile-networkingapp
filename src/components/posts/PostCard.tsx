@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { MessageSquare, ThumbsUp, Share, MoreVertical, Trash2, Edit } from 'lucide-react';
-import { Post, deletePost, likePost, unlikePost, hasUserLikedPost, getPostLikes } from '@/services/api';
+import { deletePost, likePost, unlikePost, hasUserLikedPost, getPostLikes } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   DropdownMenu,
@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import CommentSection from './CommentSection';
 import { toast } from 'sonner';
+import { Post as ApiPost } from '@/services/api';
 
 interface PostAttachment {
   id: string;
@@ -26,24 +27,10 @@ interface PostAttachment {
   created_at: string;
 }
 
-export interface Post {
-  id: string;
-  user_id: string;
-  profile: {
-    id: string;
-    name: string;
-    profile_picture: string;
-  };
-  content: string;
-  created_at: string;
-  comments_count: number;
-  attachments?: PostAttachment[];
-}
-
 interface PostCardProps {
-  post: Post;
+  post: ApiPost;
   onPostDeleted?: () => void;
-  onPostUpdated?: (updatedPost: Post) => void;
+  onPostUpdated?: (updatedPost: ApiPost) => void;
   readOnly?: boolean;
 }
 
