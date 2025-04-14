@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/layout/Header';
@@ -41,7 +40,6 @@ const Events = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   
-  // New event form state
   const [newEvent, setNewEvent] = useState({
     title: '',
     date: '',
@@ -51,7 +49,6 @@ const Events = () => {
     category: 'academic'
   });
 
-  // Load events from Supabase
   useEffect(() => {
     const loadEvents = async () => {
       if (!currentUser) return;
@@ -59,17 +56,27 @@ const Events = () => {
       setIsLoading(true);
       
       try {
-        // Fetch all events
         const { data: eventsData, error: eventsError } = await supabase
           .from('events')
-          .select(`
-            *,
-            profiles:organizer_id(name)
-          `);
+          .select('*');
           
         if (eventsError) throw eventsError;
         
-        // Fetch user's saved events
+        const organizerIds = eventsData.map(event => event.organizer_id);
+        const uniqueOrganizerIds = [...new Set(organizerIds)];
+        
+        const { data: organizersData, error: organizersError } = await supabase
+          .from('profiles')
+          .select('id, name')
+          .in('id', uniqueOrganizerIds);
+          
+        if (organizersError) throw organizersError;
+        
+        const organizerMap = new Map();
+        organizersData?.forEach(organizer => {
+          organizerMap.set(organizer.id, organizer.name);
+        });
+        
         const { data: savedData, error: savedError } = await supabase
           .from('saved_events')
           .select('event_id')
@@ -77,7 +84,6 @@ const Events = () => {
           
         if (savedError) throw savedError;
         
-        // Transform data
         const now = new Date();
         const upcoming: Event[] = [];
         const past: Event[] = [];
@@ -86,9 +92,11 @@ const Events = () => {
         
         eventsData?.forEach(event => {
           const eventDate = new Date(event.date);
+          const organizerName = organizerMap.get(event.organizer_id) || 'Unknown';
+          
           const formattedEvent = {
             ...event,
-            organizer: event.profiles?.name || 'Unknown',
+            organizer: organizerName,
             saved: savedEventIds.includes(event.id)
           };
           
@@ -118,7 +126,6 @@ const Events = () => {
     
     try {
       if (isSaved) {
-        // Remove from saved
         await supabase
           .from('saved_events')
           .delete()
@@ -131,7 +138,6 @@ const Events = () => {
         ));
         toast.success('Event removed from saved');
       } else {
-        // Add to saved
         await supabase
           .from('saved_events')
           .insert({
@@ -155,18 +161,15 @@ const Events = () => {
     if (!currentUser) return;
     
     try {
-      // Validate required fields
       if (!newEvent.title || !newEvent.date || !newEvent.location || !newEvent.category) {
         toast.error('Please fill in all required fields');
         return;
       }
       
-      // Combine date and time
       const dateTime = newEvent.time 
         ? `${newEvent.date}T${newEvent.time}`
         : `${newEvent.date}T00:00:00`;
         
-      // Insert new event
       const { data, error } = await supabase
         .from('events')
         .insert({
@@ -182,16 +185,22 @@ const Events = () => {
         
       if (error) throw error;
       
-      // Add to events list
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('id', currentUser.id)
+        .single();
+        
+      if (profileError) throw profileError;
+      
       const newEventWithOrganizer: Event = {
         ...data,
-        organizer: currentUser.user_metadata?.name || 'Me',
+        organizer: profileData.name || 'Me',
         saved: false
       };
       
       setEvents(prev => [newEventWithOrganizer, ...prev]);
       
-      // Reset form and close dialog
       setNewEvent({
         title: '',
         date: '',
@@ -480,7 +489,6 @@ const Events = () => {
         </Tabs>
       </main>
       
-      {/* Create Event Dialog */}
       <Dialog open={openCreateDialog} onOpenChange={setOpenCreateDialog}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
