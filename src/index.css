@@ -76,6 +76,10 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+  
+  html {
+    @apply scroll-smooth;
+  }
 }
 
 @layer components {
@@ -84,7 +88,7 @@
   }
   
   .unilink-card {
-    @apply bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300;
+    @apply bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 dark:bg-gray-800 dark:border dark:border-gray-700;
   }
   
   .unilink-button-primary {
@@ -113,6 +117,6 @@
   }
   
   .auth-container {
-    @apply bg-gradient-to-br from-white to-slate-100 min-h-screen;
+    @apply bg-gradient-to-br from-white to-slate-100 min-h-screen dark:from-gray-900 dark:to-gray-800;
   }
 }
