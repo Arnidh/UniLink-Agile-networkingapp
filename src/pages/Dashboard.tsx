@@ -14,8 +14,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import DepartmentStatistics from '@/components/stats/DepartmentStatistics';
+import { useTheme } from '@/contexts/ThemeContext';
 
 const Dashboard = () => {
+  const { theme } = useTheme();
   const { currentUser, profile, isLoading } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isPostsLoading, setIsPostsLoading] = useState(true);
@@ -136,7 +138,7 @@ const Dashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-16">
+      <div className={`min-h-screen pt-16 ${theme === 'dark' ? 'bg-[#141821]' : 'bg-gray-50'}`}>
         <Header />
         <div className="container py-8 flex justify-center items-center">
           <p className="text-lg text-gray-500">Loading...</p>
@@ -146,7 +148,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-16">
+    <div className={`min-h-screen pt-16 ${theme === 'dark' ? 'bg-[#141821]' : 'bg-gray-50'}`}>
       <Header />
       
       <main className="container py-8">
@@ -155,7 +157,7 @@ const Dashboard = () => {
             <Card className="mb-6">
               <CardContent className="p-6">
                 <div className="flex flex-col items-center">
-                  <div className="h-20 w-20 rounded-full bg-gray-200 overflow-hidden mb-4">
+                  <div className="h-20 w-20 rounded-full bg-gray-200 overflow-hidden mb-4 dark:bg-gray-700">
                     <img 
                       src={profile?.profile_picture || "/placeholder.svg"} 
                       alt={profile?.name || "User"} 
@@ -386,7 +388,7 @@ const Dashboard = () => {
           </div>
           
           <div className="lg:col-span-3">
-            <div className="bg-white rounded-lg shadow p-6 mb-6">
+            <div className={`rounded-lg shadow p-6 mb-6 ${theme === 'dark' ? 'bg-[#1A1F2C] text-gray-200' : 'bg-white text-gray-800'}`}>
               <div className="flex justify-between items-center mb-4">
                 <h2 className="font-semibold">My Connections</h2>
                 <span className="text-sm text-gray-500">{connections.length}</span>

@@ -23,8 +23,10 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const StudentDashboard: React.FC = () => {
+  const { theme } = useTheme();
   const { currentUser, profile } = useAuth();
   const navigate = useNavigate();
   
@@ -108,16 +110,16 @@ const StudentDashboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className={`min-h-screen flex flex-col ${theme === 'dark' ? 'bg-[#141821] text-gray-200' : 'bg-gray-50'}`}>
       <Header />
       
       <main className="flex-1 py-8">
         <div className="container px-4">
           <div className="mb-8">
             <h1 className="text-3xl font-bold">
-              Welcome, {profile.name.split(" ")[0]}!
+              Welcome, {profile?.name.split(" ")[0]}!
             </h1>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400">
               Your student dashboard for academic networking and opportunities
             </p>
           </div>
@@ -131,14 +133,14 @@ const StudentDashboard: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-2 w-full bg-gray-100 rounded-full mb-2">
+                <div className="h-2 w-full bg-gray-100 dark:bg-gray-700 rounded-full mb-2">
                   <div
                     className="h-2 bg-unilink-student rounded-full"
-                    style={{ width: profile.bio ? "75%" : "25%" }}
+                    style={{ width: profile?.bio ? "75%" : "25%" }}
                   ></div>
                 </div>
-                <p className="text-sm text-gray-600">
-                  {profile.bio ? "75% complete. Add your graduation year to improve your profile." : "25% complete. Complete your profile to improve visibility."}
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {profile?.bio ? "75% complete. Add your graduation year to improve your profile." : "25% complete. Complete your profile to improve visibility."}
                 </p>
                 <Button
                   variant="outline"

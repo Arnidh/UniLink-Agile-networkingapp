@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -120,5 +121,39 @@
   
   .dark .shadow-lg {
     @apply shadow-black/30;
+  }
+  
+  /* Dark mode specific styling for card elements */
+  .dark .bg-white {
+    @apply bg-[#1A1F2C];
+  }
+  
+  .dark .bg-gray-50 {
+    @apply bg-[#141821];
+  }
+  
+  /* Fix for various light backgrounds in dark mode */
+  .dark .border-gray-200 {
+    @apply border-gray-700;
+  }
+  
+  .dark .bg-gray-100 {
+    @apply bg-gray-800;
+  }
+  
+  .dark .text-gray-500 {
+    @apply text-gray-400;
+  }
+  
+  .dark .text-gray-600 {
+    @apply text-gray-300;
+  }
+  
+  .dark .text-gray-700 {
+    @apply text-gray-300;
+  }
+  
+  .dark .text-gray-900 {
+    @apply text-gray-100;
   }
 }

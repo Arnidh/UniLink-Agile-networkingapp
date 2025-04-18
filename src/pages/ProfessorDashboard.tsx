@@ -12,8 +12,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Calendar, Users, Network } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const ProfessorDashboard: React.FC = () => {
+  const { theme } = useTheme();
   const { currentUser, profile, isLoading } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("feed");
@@ -100,14 +102,14 @@ const ProfessorDashboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`min-h-screen ${theme === 'dark' ? 'bg-[#141821]' : 'bg-gray-50'}`}>
       <Header />
       
       <main className="container mx-auto px-4 py-8 pt-20"> {/* Added pt-20 for navbar spacing */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left sidebar - User profile */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-md p-6">
+            <div className={`rounded-lg shadow-md p-6 ${theme === 'dark' ? 'bg-[#1A1F2C]' : 'bg-white'}`}>
               <div className="flex flex-col items-center text-center">
                 <div className="h-24 w-24 rounded-full bg-gradient-to-r from-blue-500 to-teal-500 flex items-center justify-center text-white text-3xl font-bold">
                   {profile.name.charAt(0)}
@@ -135,7 +137,7 @@ const ProfessorDashboard: React.FC = () => {
               </div>
               
               <div className="mt-6">
-                <h3 className="font-medium text-gray-900">Connections</h3>
+                <h3 className="font-medium text-gray-900 dark:text-gray-100">Connections</h3>
                 <div className="flex justify-between mt-2">
                   <span className="text-gray-600">Students</span>
                   <span className="font-medium">87</span>

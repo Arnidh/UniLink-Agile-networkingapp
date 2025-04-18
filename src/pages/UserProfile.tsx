@@ -14,8 +14,10 @@ import ProfileStatistics from "@/components/profiles/ProfileStatistics";
 import { useQuery } from "@tanstack/react-query";
 import { Profile, getUserPosts, getProfileById, checkConnectionStatus, sendConnectionRequest, sendMessage } from "@/services/api";
 import { toast } from "sonner";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const UserProfile = () => {
+  const { theme } = useTheme();
   const { userId } = useParams<{ userId: string }>();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
@@ -152,16 +154,16 @@ const UserProfile = () => {
   
   if (isLoading || !profile) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className={`min-h-screen flex flex-col ${theme === 'dark' ? 'bg-[#141821]' : 'bg-gray-50'}`}>
         <Header />
         <main className="flex-1 py-8">
           <div className="container px-4">
             <div className="text-center py-10">
               <div className="animate-pulse">
-                <div className="h-32 w-32 bg-gray-200 rounded-full mx-auto mb-4"></div>
-                <div className="h-8 bg-gray-200 rounded w-48 mx-auto mb-4"></div>
-                <div className="h-4 bg-gray-200 rounded w-24 mx-auto mb-8"></div>
-                <div className="h-48 bg-gray-200 rounded max-w-md mx-auto"></div>
+                <div className="h-32 w-32 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-4"></div>
+                <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-48 mx-auto mb-4"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 mx-auto mb-8"></div>
+                <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded max-w-md mx-auto"></div>
               </div>
             </div>
           </div>
@@ -171,7 +173,7 @@ const UserProfile = () => {
   }
   
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className={`min-h-screen flex flex-col ${theme === 'dark' ? 'bg-[#141821] text-gray-200' : 'bg-gray-50'}`}>
       <Header />
       
       <main className="flex-1 py-8">
@@ -258,10 +260,10 @@ const UserProfile = () => {
                 
                 <TabsContent value="posts">
                   {userPosts.length === 0 ? (
-                    <div className="text-center py-8 border rounded-lg bg-gray-50 mt-4">
+                    <div className={`text-center py-8 border rounded-lg mt-4 ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'}`}>
                       <User className="h-12 w-12 text-gray-400 mx-auto mb-3" />
                       <h3 className="text-lg font-semibold">No posts yet</h3>
-                      <p className="text-gray-500">{profile?.name} hasn't created any posts yet</p>
+                      <p className="text-gray-500 dark:text-gray-400">{profile?.name} hasn't created any posts yet</p>
                     </div>
                   ) : (
                     <div className="space-y-4 mt-4">
