@@ -6,6 +6,7 @@ type Theme = 'light' | 'dark';
 interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
+  toggleTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -21,6 +22,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return savedTheme;
   });
 
+  const toggleTheme = () => {
+    setTheme(theme === 'light' ? 'dark' : 'light');
+  };
+
   // Update the HTML class when theme changes
   useEffect(() => {
     const root = window.document.documentElement;
@@ -30,7 +35,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [theme]);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );

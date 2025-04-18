@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -9,14 +8,14 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Bell, Lock, User, Globe, Moon, Eye, Sun } from 'lucide-react';
+import { Bell, Lock, User, Globe, Moon, Sun } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 const Settings = () => {
   const { currentUser, profile, isLoading } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const { toast } = useToast();
   
   const [activeTab, setActiveTab] = useState('profile');
   const [notifications, setNotifications] = useState({
@@ -30,8 +29,15 @@ const Settings = () => {
     profileVisibility: 'everyone',
     allowMessages: true,
     showOnlineStatus: true,
-    darkMode: false
   });
+
+  // Set dark mode switch based on the actual theme
+  const [darkModeEnabled, setDarkModeEnabled] = useState(theme === 'dark');
+  
+  // Keep dark mode switch in sync with theme
+  useEffect(() => {
+    setDarkModeEnabled(theme === 'dark');
+  }, [theme]);
 
   // Redirect if not logged in
   React.useEffect(() => {
@@ -41,10 +47,12 @@ const Settings = () => {
   }, [currentUser, isLoading, navigate]);
   
   const handleSaveSettings = (settingType: string) => {
-    toast({
-      title: "Settings saved",
-      description: `Your ${settingType} settings have been updated.`,
-    });
+    toast.success(`Your ${settingType} settings have been updated.`);
+  };
+
+  const handleDarkModeToggle = (checked: boolean) => {
+    setDarkModeEnabled(checked);
+    toggleTheme();
   };
 
   const getInitials = (name: string) => {
@@ -57,7 +65,7 @@ const Settings = () => {
 
   if (isLoading || !profile) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen">
         <Header />
         <div className="container py-8 flex justify-center items-center">
           <p className="text-lg text-gray-500">Loading...</p>
@@ -67,7 +75,7 @@ const Settings = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <Header />
       
       <main className="container py-8">
@@ -84,7 +92,7 @@ const Settings = () => {
                     <AvatarFallback className="text-lg">{getInitials(profile.name)}</AvatarFallback>
                   </Avatar>
                   <h3 className="text-xl font-semibold">{profile.name}</h3>
-                  <p className="text-sm text-gray-600 capitalize">{profile.role}</p>
+                  <p className="text-sm text-muted-foreground capitalize">{profile.role}</p>
                 </div>
                 
                 <Tabs 
@@ -96,21 +104,21 @@ const Settings = () => {
                   <TabsList className="flex flex-col h-auto items-stretch p-0 bg-transparent">
                     <TabsTrigger 
                       value="profile" 
-                      className="justify-start gap-3 px-3 py-2 data-[state=active]:bg-gray-100 rounded-md"
+                      className="justify-start gap-3 px-3 py-2 data-[state=active]:bg-accent rounded-md"
                     >
                       <User className="h-4 w-4" />
                       Profile
                     </TabsTrigger>
                     <TabsTrigger 
                       value="privacy" 
-                      className="justify-start gap-3 px-3 py-2 data-[state=active]:bg-gray-100 rounded-md"
+                      className="justify-start gap-3 px-3 py-2 data-[state=active]:bg-accent rounded-md"
                     >
                       <Lock className="h-4 w-4" />
                       Privacy
                     </TabsTrigger>
                     <TabsTrigger 
                       value="notifications" 
-                      className="justify-start gap-3 px-3 py-2 data-[state=active]:bg-gray-100 rounded-md"
+                      className="justify-start gap-3 px-3 py-2 data-[state=active]:bg-accent rounded-md"
                     >
                       <Bell className="h-4 w-4" />
                       Notifications
@@ -134,7 +142,7 @@ const Settings = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-foreground">
                         To update your profile information, go to your profile page.
                       </p>
                       <Button onClick={() => navigate('/profile')}>
@@ -158,13 +166,13 @@ const Settings = () => {
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
                           <Label htmlFor="profile-visibility" className="text-base">Profile Visibility</Label>
-                          <p className="text-sm text-gray-500">Control who can view your profile</p>
+                          <p className="text-sm text-muted-foreground">Control who can view your profile</p>
                         </div>
                         <div className="flex items-center">
-                          <Globe className="h-4 w-4 mr-2 text-gray-500" />
+                          <Globe className="h-4 w-4 mr-2 text-muted-foreground" />
                           <select 
                             id="profile-visibility"
-                            className="rounded-md border-gray-300 py-2 px-3 text-sm"
+                            className="rounded-md border bg-background py-2 px-3 text-sm"
                             value={privacy.profileVisibility}
                             onChange={(e) => setPrivacy({...privacy, profileVisibility: e.target.value})}
                           >
@@ -178,7 +186,7 @@ const Settings = () => {
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
                           <Label htmlFor="allow-messages" className="text-base">Allow Direct Messages</Label>
-                          <p className="text-sm text-gray-500">Allow others to send you direct messages</p>
+                          <p className="text-sm text-muted-foreground">Allow others to send you direct messages</p>
                         </div>
                         <Switch 
                           id="allow-messages" 
@@ -190,7 +198,7 @@ const Settings = () => {
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
                           <Label htmlFor="show-status" className="text-base">Show Online Status</Label>
-                          <p className="text-sm text-gray-500">Let others see when you're active</p>
+                          <p className="text-sm text-muted-foreground">Let others see when you're active</p>
                         </div>
                         <Switch 
                           id="show-status" 
@@ -202,13 +210,17 @@ const Settings = () => {
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
                           <Label htmlFor="dark-mode" className="text-base">Dark Mode</Label>
-                          <p className="text-sm text-gray-500">Switch between light and dark themes</p>
+                          <p className="text-sm text-muted-foreground">Switch between light and dark themes</p>
                         </div>
-                        <Switch 
-                          id="dark-mode" 
-                          checked={privacy.darkMode}
-                          onCheckedChange={(checked) => setPrivacy({...privacy, darkMode: checked})}
-                        />
+                        <div className="flex items-center space-x-2">
+                          <Sun className="h-4 w-4 text-muted-foreground" />
+                          <Switch 
+                            id="dark-mode" 
+                            checked={darkModeEnabled}
+                            onCheckedChange={handleDarkModeToggle}
+                          />
+                          <Moon className="h-4 w-4 text-muted-foreground" />
+                        </div>
                       </div>
                       
                       <Button onClick={() => handleSaveSettings('privacy')}>
@@ -232,7 +244,7 @@ const Settings = () => {
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
                           <Label htmlFor="email-notifications" className="text-base">Email Notifications</Label>
-                          <p className="text-sm text-gray-500">Receive notifications via email</p>
+                          <p className="text-sm text-muted-foreground">Receive notifications via email</p>
                         </div>
                         <Switch 
                           id="email-notifications" 
@@ -244,7 +256,7 @@ const Settings = () => {
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
                           <Label htmlFor="connection-requests" className="text-base">Connection Requests</Label>
-                          <p className="text-sm text-gray-500">Get notified about new connection requests</p>
+                          <p className="text-sm text-muted-foreground">Get notified about new connection requests</p>
                         </div>
                         <Switch 
                           id="connection-requests" 
@@ -256,7 +268,7 @@ const Settings = () => {
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
                           <Label htmlFor="message-notifications" className="text-base">Messages</Label>
-                          <p className="text-sm text-gray-500">Get notified when you receive messages</p>
+                          <p className="text-sm text-muted-foreground">Get notified when you receive messages</p>
                         </div>
                         <Switch 
                           id="message-notifications" 
@@ -268,7 +280,7 @@ const Settings = () => {
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
                           <Label htmlFor="post-mentions" className="text-base">Post Mentions</Label>
-                          <p className="text-sm text-gray-500">Get notified when mentioned in posts</p>
+                          <p className="text-sm text-muted-foreground">Get notified when mentioned in posts</p>
                         </div>
                         <Switch 
                           id="post-mentions" 
