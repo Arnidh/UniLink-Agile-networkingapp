@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,8 +13,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Menu, X, Home, User, Users, Mail, Settings, LogOut, MessageSquare, Calendar, Search } from 'lucide-react';
 import { getUnreadMessagesCount } from '@/services/api';
 import { Badge } from '@/components/ui/badge';
+import { useTheme } from '@/contexts/ThemeContext';
 
 const Header = () => {
+  const { theme } = useTheme();
   const { currentUser, profile, signOut } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -34,7 +35,6 @@ const Header = () => {
 
     fetchUnreadCount();
     
-    // Check for unread messages every minute
     const interval = setInterval(fetchUnreadCount, 60000);
     
     return () => clearInterval(interval);
@@ -58,12 +58,17 @@ const Header = () => {
   };
 
   useEffect(() => {
-    // Close mobile menu when navigating
     setIsMenuOpen(false);
   }, [location]);
 
   return (
-    <header className="bg-white border-b border-gray-200 py-3 px-4 fixed top-0 left-0 right-0 z-50">
+    <header className={`
+      ${theme === 'dark' 
+        ? 'bg-[#1A1F2C] border-gray-800' 
+        : 'bg-white border-gray-200'
+      } 
+      border-b py-3 px-4 fixed top-0 left-0 right-0 z-50`
+    }>
       <div className="container mx-auto">
         <div className="flex justify-between items-center">
           <div className="flex items-center">
@@ -191,7 +196,6 @@ const Header = () => {
           </div>
         </div>
         
-        {/* Mobile menu */}
         {isMenuOpen && isAuthenticated && (
           <div className="md:hidden mt-4 py-4 border-t">
             <nav className="flex flex-col space-y-4">
