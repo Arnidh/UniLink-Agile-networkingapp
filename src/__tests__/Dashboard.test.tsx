@@ -1,6 +1,7 @@
 
-import { render, screen, expect, vi } from '../utils/test-utils'
+import { render, screen } from '../utils/test-utils'
 import Dashboard from '../pages/Dashboard'
+import { vi } from 'vitest'
 
 // Mock the useAuth hook since Dashboard likely depends on it
 vi.mock('../contexts/AuthContext', () => ({
