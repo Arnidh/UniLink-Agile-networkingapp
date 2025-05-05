@@ -82,7 +82,12 @@
     "vite": "^5.4.1"
   },
   "scripts": {
-    "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
-    "test": "vitest"
-  }
+  "dev": "vite",
+  "build": "vite build",
+  "preview": "vite preview",
+  "test": "vitest"
+},
+"devDependencies": {
+  "vitest": "^1.0.0"
+}
 }
