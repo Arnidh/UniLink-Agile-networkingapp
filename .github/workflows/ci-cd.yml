@@ -23,13 +23,13 @@ jobs:
         run: npm ci
 
       - name: Run Unit Tests
-        run: npm run test
+        run: npx vitest run
 
       - name: Run Integration Tests
-        run: npm run test:integration
+        run: npx vitest run
 
       - name: Run Functional Tests
-        run: npm run test:functional
+        run: npx vitest run
 
       - name: Build the App
         run: npm run build
