@@ -1,95 +1,50 @@
-name: CI/CD Pipeline
+name: UniLink CI/CD Pipeline
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
-  # Job for setting up the environment and installing dependencies
-  setup:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '16' # Specify the node version here
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
 
-      - name: Install dependencies
-        run: |
-          npm install
+    - name: Install dependencies
+      run: npm install
 
-  # Job for running all tests (unit, integration, etc.)
-  test:
-    runs-on: ubuntu-latest
-    needs: setup
+    - name: Run tests
+      run: npx vitest run
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Build React app
+      run: npm run build
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '16'
+    - name: Deploy to Vercel
+      uses: amondnet/vercel-action@v25
+      with:
+        vercel-token: ${{ secrets.VERCEL_TOKEN }}
+        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+        working-directory: .
+        prod: true
 
-      - name: Install dependencies
-        run: |
-          npm install
+    - name: Log in to DockerHub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Run unit tests
-        run: |
-          npm test # or whatever command runs your tests (e.g., `npm run test`)
+    - name: Build Docker image
+      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/unilink:latest .
 
-  # Job for deploying to Docker
-  docker-deploy:
-    runs-on: ubuntu-latest
-    needs: test
-    if: success()
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build Docker image
-        run: |
-          docker build -t your-docker-image-name .
-
-      - name: Push Docker image
-        run: |
-          docker push your-docker-image-name
-
-  # Job for deploying to Vercel
-  vercel-deploy:
-    runs-on: ubuntu-latest
-    needs: test
-    if: success()
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Set up Vercel CLI
-        run: |
-          curl -fsSL https://vercel.com/download | bash
-
-      - name: Deploy to Vercel
-        run: |
-          vercel --prod --token ${{ secrets.VERCEL_TOKEN }} --confirm
-
+    - name: Push Docker image
+      run: docker push ${{ secrets.DOCKER_USERNAME }}/unilink:latest
