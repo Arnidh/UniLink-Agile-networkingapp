@@ -4,7 +4,9 @@
 
 // This file adds global type declarations for testing libraries
 declare global {
-  // Add any global types here if needed
+  namespace jest {
+    // Extend the Jest namespace if needed
+  }
 }
 
 export {}
