@@ -1,11 +1,15 @@
 
 import '@testing-library/jest-dom'
-import { expect, afterEach } from 'vitest'
+import { expect, afterEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 import * as matchers from '@testing-library/jest-dom/matchers'
 
 // Extend vitest's expect method with methods from react-testing-library
 expect.extend(matchers)
+
+// Make Vitest globals available
+window.expect = expect
+window.vi = vi
 
 // Clean up after each test
 afterEach(() => {

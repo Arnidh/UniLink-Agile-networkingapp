@@ -1,6 +1,6 @@
 
 import { render, screen } from '../utils/test-utils'
-import { Header } from '../components/layout/Header'
+import Header from '../components/layout/Header'
 
 describe('Header Component', () => {
   test('renders header with navigation', () => {
