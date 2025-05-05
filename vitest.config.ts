@@ -40,7 +40,7 @@ export default defineConfig({
       web: [/\.jsx$/, /\.tsx$/], // Apply transformations to JSX/TSX files
     },
     // Customize test run options
-    reporters: ['default'], // Remove 'html' reporter as it may be causing issues
+    reporters: ['default'], // Only use the default reporter
     outputFile: 'test-results.html'
   },
 });
