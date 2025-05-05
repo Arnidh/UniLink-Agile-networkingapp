@@ -1,3 +1,4 @@
+
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { join } from 'path';
@@ -11,11 +12,25 @@ export default defineConfig({
     globals: true, // Make globals like `describe`, `it`, and `expect` available
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'], // Test file patterns
     coverage: {
-      reporter: ['text', 'json', 'html'], // Configure coverage reports
+      provider: 'v8', // Use V8 for better coverage reporting
+      reporter: ['text', 'json', 'html', 'lcov'], // Configure coverage reports
       include: ['src/**/*.{ts,tsx}'], // Specify which files to track coverage for
-      exclude: ['src/**/*.d.ts'], // Exclude type definition files from coverage
+      exclude: [
+        'src/**/*.d.ts', 
+        'src/main.tsx', 
+        'src/vite-env.d.ts',
+        'src/**/*.test.{ts,tsx}',
+        'src/utils/test-utils.tsx',
+        'src/setupTests.ts'
+      ],
+      thresholds: {
+        lines: 70,
+        functions: 70,
+        branches: 70,
+        statements: 70
+      }
     },
-    // Setup file to run before tests (useful for global test setup)
+    // Setup file to run before tests
     setupFiles: [join(__dirname, './src/setupTests.ts')],
     alias: {
       '@': join(__dirname, 'src'), // Add alias for easier imports
@@ -25,6 +40,7 @@ export default defineConfig({
       web: [/\.jsx$/, /\.tsx$/], // Apply transformations to JSX/TSX files
     },
     // Customize test run options
-    reporters: 'default', // You can change this to 'dot' or 'json' depending on your needs
+    reporters: ['default', 'html'],
+    outputFile: 'test-results.html'
   },
 });
