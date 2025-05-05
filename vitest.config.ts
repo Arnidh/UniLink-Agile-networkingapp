@@ -11,6 +11,7 @@ export default defineConfig({
     environment: 'jsdom', // Use jsdom to simulate a browser environment
     globals: true, // Make globals like `describe`, `it`, and `expect` available
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'], // Test file patterns
+    exclude: ['src/utils/test-utils.tsx'],    
     coverage: {
       provider: 'v8', // Use V8 for better coverage reporting
       reporter: ['text', 'json', 'html', 'lcov'], // Configure coverage reports
