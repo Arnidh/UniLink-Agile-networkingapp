@@ -1,5 +1,5 @@
 
-import { render, screen } from '../utils/test-utils'
+import { render, screen, expect } from '../utils/test-utils'
 import Header from '../components/layout/Header'
 
 describe('Header Component', () => {
